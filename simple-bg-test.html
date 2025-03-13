@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Background Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            margin: 20px 0;
+            color: #ffcc00;
+        }
+        
+        .backgrounds {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            border: 1px solid red;
+        }
+        
+        #left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 300px;
+            height: 100vh;
+            background-image: url('assets/images/left-bg.png');
+            background-repeat: no-repeat;
+            background-position: left top;
+            border: 1px solid yellow;
+        }
+        
+        #right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100vh;
+            background-image: url('assets/images/right-bg.png');
+            background-repeat: no-repeat;
+            background-position: right top;
+            border: 1px solid green;
+        }
+        
+        #top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 250px;
+            background-image: url('assets/images/top-bg.png');
+            background-repeat: no-repeat;
+            background-position: top center;
+            border: 1px solid blue;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Background Test</h1>
+    
+    <div class="backgrounds">
+        <div id="left"></div>
+        <div id="right"></div>
+        <div id="top"></div>
+    </div>
+    
+    <div class="footer">
+        <p>You should see three backgrounds: left, right, and top.</p>
+        <p>If you don't see them, check browser console for errors.</p>
+    </div>
+    
+    <script>
+        // Check if images loaded successfully
+        window.onload = function() {
+            const images = [
+                'assets/images/left-bg.png',
+                'assets/images/right-bg.png',
+                'assets/images/top-bg.png'
+            ];
+            
+            images.forEach(src => {
+                const img = new Image();
+                img.onload = function() {
+                    console.log(`Success: ${src} loaded successfully`);
+                };
+                img.onerror = function() {
+                    console.error(`Error: Failed to load ${src}`);
+                };
+                img.src = src;
+            });
+        };
+    </script>
+</body>
+</html> 

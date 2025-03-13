@@ -68,7 +68,8 @@ class AudioManager {
             audio.addEventListener('canplaythrough', () => {
                 if (soundId.startsWith('music_')) {
                     this.music[soundId] = audio;
-                    audio.loop = true;
+                    // Only set loop to true for non-menu music
+                    audio.loop = soundId !== 'music_menu';
                 } else {
                     this.sounds[soundId] = audio;
                     
@@ -229,11 +230,6 @@ class AudioManager {
         const fullMusicId = `music_${musicId}`;
         if (this.muted || !this.music[fullMusicId]) return;
         
-        // If this is menu music and it's already been played, don't play it again
-        if (musicId === 'menu' && this.menuMusicPlayed) {
-            return;
-        }
-        
         try {
             // Stop current music if playing
             if (this.currentMusic) {
@@ -243,13 +239,16 @@ class AudioManager {
             const music = this.music[fullMusicId];
             music.currentTime = 0;
             music.volume = this.volume * 0.5; // Music a bit quieter than SFX
+            
+            // Set loop property based on music type
+            if (musicId === 'menu') {
+                music.loop = false; // Menu music should not loop
+            } else {
+                music.loop = true; // Other music can loop
+            }
+            
             music.play().catch(error => console.warn(`Error playing music ${musicId}:`, error));
             this.currentMusic = fullMusicId;
-            
-            // If this is menu music, mark it as played
-            if (musicId === 'menu') {
-                this.menuMusicPlayed = true;
-            }
         } catch (e) {
             console.warn(`Error playing music ${musicId}:`, e);
         }
@@ -358,15 +357,12 @@ class AudioManager {
         
         const audioAssets = [
             { id: 'music_menu', path: 'assets/audio/menu_music.mp3' },
-            { id: 'music_game', path: 'assets/audio/game_music.mp3' },
             { id: 'sfx_platform_move', path: 'assets/audio/platform_move.mp3' },
             { id: 'sfx_drone_hum', path: 'assets/audio/drone_hum.mp3' },
             { id: 'sfx_reb_activate', path: 'assets/audio/reb_activate.mp3' },
             { id: 'sfx_drone_destroyed', path: 'assets/audio/drone_destroyed.mp3' },
             { id: 'sfx_explosion', path: 'assets/audio/explosion.mp3' },
-            { id: 'sfx_mission_complete', path: 'assets/audio/mission_complete.mp3' },
-            { id: 'sfx_game_over', path: 'assets/audio/game_over.mp3' },
-            { id: 'sfx_button_click', path: 'assets/audio/button_click.mp3' }
+            { id: 'sfx_mission_complete', path: 'assets/audio/mission_complete.mp3' }
         ];
 
         console.log("Loading audio assets:", audioAssets.map(a => a.id).join(", "));

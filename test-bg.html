@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Background Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        h1 {
+            padding-top: 50px;
+            margin-bottom: 40px;
+            color: #ffcc00;
+        }
+        
+        .bg-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            border: 1px dashed #666;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        /* Left background demo */
+        .left-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: auto;
+            background-image: url('assets/images/left-bg.png');
+            background-repeat: no-repeat;
+            background-position: left top;
+            background-size: auto 100%;
+            max-width: 75vw;
+        }
+        
+        /* Right background demo */
+        .right-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: auto;
+            background-image: url('assets/images/right-bg.png');
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: auto 100%;
+            max-width: 75vw;
+        }
+        
+        /* Top background demo */
+        .top-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            background-image: url('assets/images/top-bg.png');
+            background-repeat: no-repeat;
+            background-position: top center;
+            background-size: 100% auto;
+            max-height: 50vh;
+        }
+        
+        .explanation {
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            max-width: 800px;
+            margin: 20px auto;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Background Images Test</h1>
+    
+    <div class="explanation">
+        <p>This page demonstrates how the background images will appear with their new settings.</p>
+        <p>The images maintain their original aspect ratio while filling the available space.</p>
+    </div>
+    
+    <div class="bg-container">
+        <!-- All backgrounds in one container to see how they look together -->
+        <div class="left-bg"></div>
+        <div class="right-bg"></div>
+        <div class="top-bg"></div>
+    </div>
+</body>
+</html> 

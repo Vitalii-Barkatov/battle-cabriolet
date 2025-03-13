@@ -17,6 +17,50 @@ body {
     margin: 0;
     box-sizing: border-box;
     overflow-x: hidden;
+    position: relative;
+}
+
+/* Page background elements - updated for img elements */
+.left-background,
+.right-background,
+.top-background {
+    position: fixed;
+    pointer-events: none;
+    z-index: -1;
+    display: block;
+}
+
+/* Left background */
+.left-background {
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: auto;
+    max-width: 400px;
+    object-fit: contain;
+    object-position: left top;
+}
+
+/* Right background */
+.right-background {
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: auto;
+    max-width: 400px;
+    object-fit: contain;
+    object-position: right top;
+}
+
+/* Top background */
+.top-background {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+    object-fit: contain;
+    object-position: top center;
 }
 
 #game-container {
@@ -327,8 +371,13 @@ button:hover {
 
 /* Footer styling */
 .footer-container {
-    margin-top: 20px;
+    position: fixed;
+    bottom: 15px;
+    left: 0;
+    width: 100%;
     text-align: center;
+    z-index: 200;
+    padding: 10px;
 }
 
 .footer-link {
@@ -338,11 +387,15 @@ button:hover {
     font-size: 18px;
     font-weight: normal;
     transition: all 0.2s;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 5px 15px;
+    border-radius: 15px;
 }
 
 .footer-link:hover {
     color: #2980b9;
     transform: scale(1.05);
+    background-color: rgba(0, 0, 0, 0.8);
 }
 
 /* Leaderboard styles */
@@ -484,7 +537,7 @@ button:hover {
     color: #fff;
     padding: 10px 20px;
     border-radius: 5px;
-    z-index: 80; /* Above game but below UI overlay */
+    z-index: 80;
     font-size: 16px;
     text-align: center;
     max-width: 90%;

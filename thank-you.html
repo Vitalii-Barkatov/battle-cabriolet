@@ -25,6 +25,52 @@
             margin: 0;
             text-align: center;
             line-height: 1.6;
+            position: relative;
+        }
+
+        .left-background,
+        .right-background,
+        .top-background {
+            position: fixed;
+            pointer-events: none;
+            z-index: -1;
+            display: block;
+        }
+
+        .left-background {
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: auto;
+            background-image: url('assets/images/left-bg.png');
+            background-repeat: no-repeat;
+            background-position: left top;
+            background-size: auto 100%;
+            max-width: 75vw;
+        }
+
+        .right-background {
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: auto;
+            background-image: url('assets/images/right-bg.png');
+            background-repeat: no-repeat;
+            background-position: right top;
+            background-size: auto 100%;
+            max-width: 75vw;
+        }
+
+        .top-background {
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            background-image: url('assets/images/top-bg.png');
+            background-repeat: no-repeat;
+            background-position: top center;
+            background-size: 100% auto;
+            max-height: 50vh;
         }
 
         .thank-you-container {
@@ -35,6 +81,8 @@
             padding: 40px 20px;
             border-radius: 10px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
@@ -73,9 +121,40 @@
             color: #2980b9;
             transform: scale(1.05);
         }
+
+        .footer-container {
+            position: fixed;
+            bottom: 15px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 200;
+            padding: 10px;
+        }
+
+        .footer-link {
+            display: inline-block;
+            color: #3498db;
+            text-decoration: underline;
+            font-size: 18px;
+            font-weight: normal;
+            transition: all 0.2s;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+
+        .footer-link:hover {
+            color: #2980b9;
+            transform: scale(1.05);
+            background-color: rgba(0, 0, 0, 0.8);
+        }
     </style>
 </head>
 <body>
+    <div class="left-background"></div>
+    <div class="right-background"></div>
+    <div class="top-background"></div>
     <div class="thank-you-container">
         <h1>Дякую за донат!</h1>
         <p>Ваша підтримка дуже важлива рятує життя.</p>
@@ -84,6 +163,9 @@
         </div>
         <p>Введіть цей код у гру, щоб продовжити.</p>
         <a href="index.html" class="back-link">Повернутися до гри</a>
+    </div>
+    <div class="footer-container">
+        <a href="https://nezneba.in.ua/" target="_blank" class="footer-link">Більше про ініціативу (Не) З Неба</a>
     </div>
 </body>
 </html> 

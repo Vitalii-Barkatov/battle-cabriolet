@@ -210,13 +210,11 @@ class UI {
     _addEventListeners() {
         // Start button
         this.startButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this._handleStartGame();
         });
         
         // Donate button
         this.donateButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this.showScreen('donation');
             // Update QR code if image manager is available
             if (this.imageManager) {
@@ -226,13 +224,11 @@ class UI {
         
         // Back from donation button
         this.backFromDonationButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this.showScreen('menu');
         });
         
         // Restart button
         this.restartButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this._handleRestartGame();
         });
         
@@ -264,13 +260,11 @@ class UI {
         
         // Leaderboard button on game over screen
         document.getElementById('view-leaderboard-button').addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this._loadAndShowLeaderboard();
         });
         
         // Leaderboard close button
         document.getElementById('leaderboard-close-button').addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this.showScreen(this.previousScreen || 'menu');
         });
         
@@ -281,7 +275,6 @@ class UI {
         
         // Cancel submit button
         document.getElementById('cancel-submit-button').addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this.showScreen('gameOver');
         });
         
@@ -294,7 +287,6 @@ class UI {
         
         // Leaderboard button (main menu)
         this.leaderboardButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
             this._loadAndShowLeaderboard();
         });
     }
@@ -370,7 +362,6 @@ class UI {
                 break;
             case 'game':
                 this.hud.classList.remove('hidden');
-                this.audioManager.playMusic('game');
                 break;
         }
     }
@@ -389,8 +380,6 @@ class UI {
         this.uiOverlay.classList.add('hidden');
         this.hud.classList.remove('hidden');
         this.menuMusicStarted = false; // Reset flag when starting a new game
-        // Start game music
-        this.audioManager.playMusic('game');
     }
 
     /**
@@ -407,8 +396,6 @@ class UI {
         this.uiOverlay.classList.add('hidden');
         this.hud.classList.remove('hidden');
         this.menuMusicStarted = false; // Reset flag when restarting
-        // Start game music
-        this.audioManager.playMusic('game');
     }
 
     /**
@@ -419,7 +406,7 @@ class UI {
         const promoCode = this.promoCodeInput.value.trim();
         
         // Check if the code is valid
-        if (promoCode === "UKRAINE" || promoCode === "CABRIOLET") {
+        if (promoCode === "RUSNIPYZDA") {
             // Set the flag to revive the player
             this.playerRevived = true;
             // Mark that a promo code has been used this session
@@ -430,9 +417,6 @@ class UI {
             
             // Hide the UI overlay and show the HUD to return to the game
             this.showScreen('game');
-            
-            // Play game music
-            this.audioManager.playMusic('game');
         } else {
             // Display error message
             this.showMessage(GameTexts.messages.invalidCode);
@@ -501,7 +485,6 @@ class UI {
     showGameOver(imageManager) {
         this.finalScoreElement.textContent = this.score;
         this.showScreen('gameOver');
-        this.audioManager.playSfx('sfx_game_over');
         this.audioManager.stopMusic();
         
         // Always use the stored imageManager first, then fall back to parameter if needed
@@ -751,7 +734,6 @@ class UI {
                 
                 // Switch to game screen and call callback
                 this.showScreen('game');
-                this.audioManager.playMusic('game');
                 
                 if (typeof callback === 'function') {
                     callback();
@@ -854,7 +836,6 @@ class UI {
                     
                     // Add event listener
                     submitBtn.addEventListener('click', () => {
-                        this.audioManager.playSfx('sfx_button_click');
                         this.showScreen('submitScore');
                     });
                 }
@@ -871,8 +852,6 @@ class UI {
      * @private
      */
     _handleScoreSubmit() {
-        this.audioManager.playSfx('sfx_button_click');
-        
         const nameInput = document.getElementById('player-name');
         const playerName = nameInput.value.trim();
         const errorElement = document.getElementById('name-required-error');

@@ -47,14 +47,11 @@ function createPlaceholderAudioFiles() {
     // List of audio files that would be needed in a real project:
     const audioFiles = [
         'assets/audio/menu_music.mp3',
-        'assets/audio/game_music.mp3',
         'assets/audio/platform_move.mp3',
         'assets/audio/drone_hum.mp3',
         'assets/audio/reb_activate.mp3',
         'assets/audio/drone_destroyed.mp3',
-        'assets/audio/mission_complete.mp3',
-        'assets/audio/game_over.mp3',
-        'assets/audio/button_click.mp3'
+        'assets/audio/mission_complete.mp3'
     ];
     
     // Log the audio files that would be created
