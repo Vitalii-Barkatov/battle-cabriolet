@@ -92,7 +92,7 @@ class UI {
         // Set introduction text
         const introTextElement = document.getElementById('intro-text');
         if (introTextElement) {
-            introTextElement.textContent = GameTexts.menu.introduction;
+            introTextElement.innerHTML = GameTexts.menu.introduction.replace(/\n/g, '<br>');
         }
         
         // Game over screen
@@ -498,9 +498,17 @@ class UI {
         this.leaderboardManager.wouldPlaceOnLeaderboard(this.score)
             .then(qualifies => {
                 if (qualifies) {
-                    // Show submit score popup automatically
+                    // Instead of automatically showing submit screen, show a notification
                     setTimeout(() => {
-                        this.showScreen('submitScore');
+                        const leaderboardButton = document.getElementById('view-leaderboard-button');
+                        if (leaderboardButton) {
+                            // Add a visual indicator that this score can be submitted
+                            leaderboardButton.classList.add('highlight-button');
+                            leaderboardButton.innerHTML = `<span class="blink-icon">★</span> ${GameTexts.leaderboard.viewLeaderboard}`;
+                            
+                            // Show a message that the score qualifies for the leaderboard
+                            this.showMessage(GameTexts.leaderboard.scoreQualifies, 5000);
+                        }
                     }, 2000);
                 }
             })
@@ -759,6 +767,12 @@ class UI {
         // Clear any existing scores
         tableBody.innerHTML = '';
         
+        // Check if the submit score button exists, and remove it if it does
+        const existingSubmitBtn = document.getElementById('open-submit-score-btn');
+        if (existingSubmitBtn) {
+            existingSubmitBtn.remove();
+        }
+        
         // Load scores from Firebase
         this.leaderboardManager.getTopScores()
             .then(scores => {
@@ -802,6 +816,32 @@ class UI {
                     noScoresCell.textContent = 'Ще немає результатів';
                     noScoresRow.appendChild(noScoresCell);
                     tableBody.appendChild(noScoresRow);
+                }
+                
+                // Check if player's score qualifies for leaderboard
+                return this.leaderboardManager.wouldPlaceOnLeaderboard(this.score);
+            })
+            .then(qualifies => {
+                if (qualifies && this.score > 0) {
+                    // Add a button to submit score
+                    const leaderboardScreen = document.getElementById('leaderboard-screen');
+                    const closeButton = document.getElementById('leaderboard-close-button');
+                    
+                    const submitBtn = document.createElement('button');
+                    submitBtn.id = 'open-submit-score-btn';
+                    submitBtn.textContent = GameTexts.leaderboard.enterName;
+                    submitBtn.classList.add('highlight-button');
+                    
+                    // Insert before close button
+                    if (closeButton && leaderboardScreen) {
+                        leaderboardScreen.insertBefore(submitBtn, closeButton);
+                    }
+                    
+                    // Add event listener
+                    submitBtn.addEventListener('click', () => {
+                        this.audioManager.playSfx('sfx_button_click');
+                        this.showScreen('submitScore');
+                    });
                 }
             })
             .catch(error => {
