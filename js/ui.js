@@ -16,6 +16,8 @@ class UI {
         this.shouldStart = false;
         this.shouldRestart = false;
         this.playerRevived = false;
+        this.previousScreen = 'menu'; // Track which screen the user came from
+        this.menuMusicStarted = false; // Track if menu music has started
         
         // UI elements
         this.menuScreen = document.getElementById('menu-screen');
@@ -119,14 +121,34 @@ class UI {
         document.getElementById('donation-title').textContent = GameTexts.donation.title;
         this.backFromDonationButton.textContent = GameTexts.donation.backToMenu;
         
-        // Set donation links text
-        document.getElementById('monobank-link').textContent = GameTexts.donation.links.monobank;
-        document.getElementById('privat-link').textContent = GameTexts.donation.links.privat;
-        document.getElementById('paypal-link').textContent = GameTexts.donation.links.paypal;
+        // Set donation links text for both screens
+        const donationScreenLinks = {
+            'monobank-link': GameTexts.donation.links.monobank,
+            'privat-link': GameTexts.donation.links.privat,
+            'paypal-link': GameTexts.donation.links.paypal
+        };
+        
+        // Set text for game over screen links
+        document.querySelectorAll('#game-over-screen .donation-links a').forEach(link => {
+            const id = link.id;
+            if (donationScreenLinks[id]) {
+                link.textContent = donationScreenLinks[id];
+            }
+        });
+        
+        // Set text for donation screen links
+        document.querySelectorAll('#donation-screen .donation-links a').forEach(link => {
+            const id = link.id;
+            if (donationScreenLinks[id]) {
+                link.textContent = donationScreenLinks[id];
+            }
+        });
         
         // Set donation screen text (same as game over screen)
         const donationScreenP = donationScreen.querySelector('.donation-section p');
-        donationScreenP.innerHTML = GameTexts.gameOver.donationText.replace(/\n/g, '<br>');
+        if (donationScreenP) {
+            donationScreenP.innerHTML = GameTexts.gameOver.donationText.replace(/\n/g, '<br>');
+        }
         
         // Set promo code placeholder
         this.promoCodeInput.placeholder = GameTexts.gameOver.promoCodePlaceholder;
@@ -244,7 +266,7 @@ class UI {
         // Leaderboard close button
         document.getElementById('leaderboard-close-button').addEventListener('click', () => {
             this.audioManager.playSfx('sfx_button_click');
-            this.showScreen('gameOver');
+            this.showScreen(this.previousScreen || 'menu');
         });
         
         // Submit score button
@@ -282,6 +304,14 @@ class UI {
         const leaderboardScreen = document.getElementById('leaderboard-screen');
         const submitScoreScreen = document.getElementById('submit-score-screen');
         
+        // Save previous screen if we're switching to leaderboard
+        if (screenName === 'leaderboard') {
+            // Don't track 'leaderboard' or 'submitScore' as previous screens
+            if (this.previousScreen !== 'leaderboard' && this.previousScreen !== 'submitScore') {
+                this.previousScreen = this._getCurrentVisibleScreen();
+            }
+        }
+        
         // Hide all screens
         this.menuScreen.classList.add('hidden');
         this.gameOverScreen.classList.add('hidden');
@@ -303,7 +333,11 @@ class UI {
             case 'menu':
                 this.uiOverlay.classList.remove('hidden');
                 this.menuScreen.classList.remove('hidden');
-                this.audioManager.playMusic('menu');
+                // Only play menu music the first time the menu is shown
+                if (!this.menuMusicStarted) {
+                    this.audioManager.playMusic('menu');
+                    this.menuMusicStarted = true;
+                }
                 break;
             case 'gameOver':
                 this.uiOverlay.classList.remove('hidden');
@@ -346,6 +380,12 @@ class UI {
         
         // Set this property so Game class can check if we started a new game
         this.gameStarted = true;
+        this.shouldStart = true;
+        this.uiOverlay.classList.add('hidden');
+        this.hud.classList.remove('hidden');
+        this.menuMusicStarted = false; // Reset flag when starting a new game
+        // Start game music
+        this.audioManager.playMusic('game');
     }
 
     /**
@@ -358,6 +398,12 @@ class UI {
         
         // Set this property so Game class can check if we should restart
         this.gameRestarted = true;
+        this.shouldRestart = true;
+        this.uiOverlay.classList.add('hidden');
+        this.hud.classList.remove('hidden');
+        this.menuMusicStarted = false; // Reset flag when restarting
+        // Start game music
+        this.audioManager.playMusic('game');
     }
 
     /**
@@ -802,5 +848,21 @@ class UI {
                 console.error("Error submitting score:", error);
                 this.showMessage("Error submitting score. Please try again.");
             });
+    }
+
+    /**
+     * Get the current visible screen
+     * @private
+     * @returns {string} The name of the currently visible screen
+     */
+    _getCurrentVisibleScreen() {
+        if (!this.menuScreen.classList.contains('hidden')) return 'menu';
+        if (!this.gameOverScreen.classList.contains('hidden')) return 'gameOver';
+        if (!this.donationScreen.classList.contains('hidden')) return 'donation';
+        
+        const missionPreparationScreen = document.getElementById('mission-preparation-screen');
+        if (missionPreparationScreen && !missionPreparationScreen.classList.contains('hidden')) return 'missionPreparation';
+        
+        return 'menu'; // Default to menu if nothing else is visible
     }
 } 
