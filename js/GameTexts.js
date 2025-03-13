@@ -96,7 +96,13 @@ const GameTexts = {
         codeAccepted: "Код прийнято! Продовження гри...",
         invalidCode: "Недійсний промокод!",
         revivalSuccess: "Відродження успішне! Гра продовжена зі збереженням рахунку.",
-        droneDestroyed: (count, points) => `+${points} очок! ${count} дрон${count > 1 ? 'и' : ''} знищено!`
+        droneDestroyed: (count, points) => `${count} ${count === 1 ? 'дрон знищено' : 'дронів знищено'} (+${points} очок)`,
+        missionComplete: (points) => `Місію виконано! (+${points} очок)`,
+        cargoDelivered: 'Вантаж доставлено',
+        evacSuccessful: 'Евакуація успішна',
+        newMission: 'Нове завдання',
+        rotateDevice: 'Поверніть пристрій горизонтально для кращого ігрового досвіду',
+        touchControls: 'Використовуйте D-pad для руху і кнопку РЕБ для активації радіоелектронної боротьби'
     },
     
     // Leaderboard

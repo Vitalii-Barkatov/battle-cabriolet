@@ -54,67 +54,70 @@ class Player {
 
     /**
      * Update player state
-     * @param {number} deltaTime - Time since last update in milliseconds
-     * @param {Object} keys - Object containing keyboard state
-     * @param {Object} map - Current map data
+     * @param {number} deltaTime - Time elapsed since last update in milliseconds
+     * @param {Object} keys - Current key states
+     * @param {Array} map - Current game map
      */
     update(deltaTime, keys, map) {
-        // Handle keyboard input
+        // Calculate direction from input
         this.direction = { x: 0, y: 0 };
+        
+        // Reset movement flag
         this.isMoving = false;
         
-        // Set horizontal direction first
-        if (keys.ArrowLeft) {
-            this.direction.x = -1;
+        // Handle arrow key input
+        if (keys['ArrowUp']) {
+            this.direction.y = -1;
+            this.orientation = 0;
             this.isMoving = true;
-            this.orientation = 3; // left
-        } else if (keys.ArrowRight) {
-            this.direction.x = 1;
+        } else if (keys['ArrowDown']) {
+            this.direction.y = 1;
+            this.orientation = 2;
             this.isMoving = true;
-            this.orientation = 1; // right
         }
         
-        // Only set vertical direction if no horizontal movement
-        if (this.direction.x === 0) {
-            if (keys.ArrowUp) {
-                this.direction.y = -1;
-                this.isMoving = true;
-                this.orientation = 0; // up
-            } else if (keys.ArrowDown) {
-                this.direction.y = 1;
-                this.isMoving = true;
-                this.orientation = 2; // down
-            }
+        if (keys['ArrowLeft']) {
+            this.direction.x = -1;
+            this.orientation = 3;
+            this.isMoving = true;
+        } else if (keys['ArrowRight']) {
+            this.direction.x = 1;
+            this.orientation = 1;
+            this.isMoving = true;
+        }
+        
+        // For mobile: normalize diagonal movement to avoid faster diagonal speed
+        if (this.direction.x !== 0 && this.direction.y !== 0) {
+            const length = Math.sqrt(this.direction.x * this.direction.x + this.direction.y * this.direction.y);
+            this.direction.x /= length;
+            this.direction.y /= length;
         }
         
         // Adjust speed based on terrain
         this._adjustSpeedBasedOnTerrain(map);
         
-        // Apply movement
-        const newX = this.x + this.direction.x * this.currentSpeed;
-        const newY = this.y + this.direction.y * this.currentSpeed;
-        
-        // Check for collisions before moving
-        if (this._canMove(newX, this.y, map)) {
-            this.x = newX;
+        // Apply movement if moving
+        if (this.isMoving) {
+            const newX = this.x + this.direction.x * this.currentSpeed;
+            const newY = this.y + this.direction.y * this.currentSpeed;
+            
+            // Check if we can move to the new position
+            if (this._canMove(newX, newY, map)) {
+                this.x = newX;
+                this.y = newY;
+            }
+            
+            // Handle movement sound
+            this._handleMovementSound();
         }
         
-        if (this._canMove(this.x, newY, map)) {
-            this.y = newY;
-        }
+        // Update EW (Electronic Warfare) state
+        this._updateEWState(deltaTime);
         
-        // Handle movement sound
-        this._handleMovementSound();
-        
-        // Handle Electronic Warfare activation (moved from _updateEWState)
-        // This ensures EW can be activated regardless of movement keys
-        // Allow both Space and Enter keys to activate EW
-        if ((keys[' '] || keys['Enter']) && this.ewCooldownComplete && !this.ewActive) {
+        // Check for EW activation (space bar)
+        if (keys[' '] && this.ewCooldownComplete && !this.ewActive) {
             this.activateEW();
         }
-        
-        // Update EW state
-        this._updateEWState(deltaTime);
     }
 
     /**

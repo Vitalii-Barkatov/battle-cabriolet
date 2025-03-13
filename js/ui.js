@@ -73,6 +73,9 @@ class UI {
         
         // Show menu screen initially
         this.showScreen('menu');
+        
+        // Initialize mobile-specific UI adjustments
+        this._initMobileUI();
     }
 
     /**
@@ -521,6 +524,12 @@ class UI {
             .catch(error => {
                 console.error("Error checking leaderboard placement:", error);
             });
+        
+        // Check if the device is in portrait mode on mobile
+        if (document.body.classList.contains('mobile-device') && window.innerHeight > window.innerWidth) {
+            // Show message to rotate for better gameplay
+            this.showMessage(GameTexts.messages.rotateDevice || "Поверніть пристрій для кращої гри", 5000);
+        }
     }
     
     /**
@@ -898,5 +907,91 @@ class UI {
         if (missionPreparationScreen && !missionPreparationScreen.classList.contains('hidden')) return 'missionPreparation';
         
         return 'menu'; // Default to menu if nothing else is visible
+    }
+
+    /**
+     * Initialize mobile-specific UI adjustments
+     * @private
+     */
+    _initMobileUI() {
+        // Check if this is a mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 600;
+        
+        if (isMobile) {
+            // Add class to body for mobile-specific CSS
+            document.body.classList.add('mobile-device');
+            
+            // Set up the REB cooldown visualization for the REB button
+            this._setupRebButtonCooldown();
+            
+            // Setup screen orientation warning if needed
+            this._setupOrientationWarning();
+        }
+    }
+    
+    /**
+     * Set up the REB cooldown visualization for the mobile REB button
+     * @private
+     */
+    _setupRebButtonCooldown() {
+        const rebButton = document.getElementById('reb-button');
+        
+        // Update the REB button to show cooldown state
+        setInterval(() => {
+            if (!this.playerReference) return;
+            
+            const cooldownProgress = this.playerReference.getEWCooldownProgress();
+            
+            if (cooldownProgress < 1) {
+                rebButton.classList.add('cooldown');
+                rebButton.textContent = `РЕБ ${Math.floor(cooldownProgress * 100)}%`;
+            } else {
+                rebButton.classList.remove('cooldown');
+                rebButton.textContent = 'РЕБ';
+            }
+        }, 100);
+    }
+    
+    /**
+     * Setup orientation warning for mobile devices
+     * @private
+     */
+    _setupOrientationWarning() {
+        // Create orientation warning element if it doesn't exist
+        if (!document.getElementById('orientation-warning')) {
+            const warning = document.createElement('div');
+            warning.id = 'orientation-warning';
+            warning.textContent = 'Будь ласка, переверніть пристрій для кращого ігрового досвіду.';
+            warning.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.9);
+                color: white;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                padding: 20px;
+                z-index: 9999;
+                font-size: 24px;
+            `;
+            document.body.appendChild(warning);
+            
+            // Check orientation and show/hide warning
+            const checkOrientation = () => {
+                if (window.innerHeight > window.innerWidth) { // Portrait
+                    warning.style.display = 'flex';
+                } else { // Landscape
+                    warning.style.display = 'none';
+                }
+            };
+            
+            // Check immediately and on resize
+            checkOrientation();
+            window.addEventListener('resize', checkOrientation);
+        }
     }
 } 

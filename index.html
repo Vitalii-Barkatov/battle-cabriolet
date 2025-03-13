@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
     <title>Бойовий кабріолет</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <!-- Google tag (gtag.js) -->
@@ -120,6 +123,17 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Mobile Controls -->
+        <div id="mobile-controls" class="hidden">
+            <div id="dpad-container">
+                <div id="dpad-up" class="dpad-button">&#9650;</div>
+                <div id="dpad-right" class="dpad-button">&#9654;</div>
+                <div id="dpad-down" class="dpad-button">&#9660;</div>
+                <div id="dpad-left" class="dpad-button">&#9664;</div>
+            </div>
+            <div id="reb-button">РЕБ</div>
+        </div>
     </div>
     <div class="footer-container">
         <a href="https://nezneba.in.ua/" target="_blank" class="footer-link" id="footer-link"></a>
@@ -139,6 +153,7 @@
     <script src="js/mapGenerator.js"></script>
     <script src="js/player.js"></script>
     <script src="js/drone.js"></script>
+    <script src="js/touchControls.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/missionManager.js"></script>
     <script src="js/game.js"></script>

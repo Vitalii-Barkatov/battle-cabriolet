@@ -90,6 +90,12 @@ class Game {
             this.keys[e.key] = false;
         });
         
+        // Set up mobile touch controls
+        this._setupMobileControls();
+        
+        // Detect mobile devices and adjust game settings accordingly
+        this._setupMobileDetection();
+        
         // Show a message that we're running without audio
         console.log('Game ready - running without audio files is fine');
         
@@ -749,7 +755,12 @@ class Game {
     _startNewGame() {
         // Reset score
         this.score = 0;
-        this.ui.updateScore(this.score);
+        
+        // Reset player position
+        this.player.resetPosition(this.width / 2, this.height / 2);
+        
+        // Reset EW state
+        this.player.resetEW();
         
         // Reset game state
         this.isGameOver = false;
@@ -765,6 +776,14 @@ class Game {
             // This callback runs after countdown completes
             this.isRunning = true;
             this._startNewMission(missionType);
+            
+            // Show mobile controls if on mobile
+            if (this.isMobileDevice) {
+                document.getElementById('mobile-controls').classList.remove('hidden');
+            }
+            
+            // Trigger game started event
+            this.triggerEvent('gameStarted');
         });
     }
 
@@ -805,6 +824,12 @@ class Game {
         this.audioManager.stopSfx('sfx_platform_move');
         this.audioManager.stopSfx('sfx_drone_hum');
         this.audioManager.stopSfx('sfx_reb_activate');
+        
+        // Hide mobile controls
+        document.getElementById('mobile-controls').classList.add('hidden');
+        
+        // Trigger game ended event
+        this.triggerEvent('gameEnded');
         
         // Delay showing game over to allow explosion sound to play
         setTimeout(() => {
@@ -854,5 +879,173 @@ class Game {
     _addScore(points) {
         this.score += points;
         this.ui.updateScore(this.score);
+    }
+
+    /**
+     * Set up mobile touch controls
+     * @private
+     */
+    _setupMobileControls() {
+        // Get mobile control elements
+        const mobileControls = document.getElementById('mobile-controls');
+        const dpadUp = document.getElementById('dpad-up');
+        const dpadRight = document.getElementById('dpad-right');
+        const dpadDown = document.getElementById('dpad-down');
+        const dpadLeft = document.getElementById('dpad-left');
+        const rebButton = document.getElementById('reb-button');
+        
+        // Touch event handlers for D-pad
+        const handleTouchStart = (direction) => {
+            return (e) => {
+                e.preventDefault();
+                this.keys[direction] = true;
+            };
+        };
+        
+        const handleTouchEnd = (direction) => {
+            return (e) => {
+                e.preventDefault();
+                this.keys[direction] = false;
+            };
+        };
+        
+        // Setup touch events for d-pad
+        dpadUp.addEventListener('touchstart', handleTouchStart('ArrowUp'));
+        dpadUp.addEventListener('touchend', handleTouchEnd('ArrowUp'));
+        dpadUp.addEventListener('touchcancel', handleTouchEnd('ArrowUp'));
+        
+        dpadRight.addEventListener('touchstart', handleTouchStart('ArrowRight'));
+        dpadRight.addEventListener('touchend', handleTouchEnd('ArrowRight'));
+        dpadRight.addEventListener('touchcancel', handleTouchEnd('ArrowRight'));
+        
+        dpadDown.addEventListener('touchstart', handleTouchStart('ArrowDown'));
+        dpadDown.addEventListener('touchend', handleTouchEnd('ArrowDown'));
+        dpadDown.addEventListener('touchcancel', handleTouchEnd('ArrowDown'));
+        
+        dpadLeft.addEventListener('touchstart', handleTouchStart('ArrowLeft'));
+        dpadLeft.addEventListener('touchend', handleTouchEnd('ArrowLeft'));
+        dpadLeft.addEventListener('touchcancel', handleTouchEnd('ArrowLeft'));
+        
+        // Setup touch events for REB button
+        rebButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.keys[' '] = true; // Space key is used for EW activation
+        });
+        
+        rebButton.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.keys[' '] = false;
+        });
+        
+        rebButton.addEventListener('touchcancel', (e) => {
+            e.preventDefault();
+            this.keys[' '] = false;
+        });
+        
+        // Add mouse events for desktop testing
+        dpadUp.addEventListener('mousedown', handleTouchStart('ArrowUp'));
+        dpadUp.addEventListener('mouseup', handleTouchEnd('ArrowUp'));
+        dpadUp.addEventListener('mouseleave', handleTouchEnd('ArrowUp'));
+        
+        dpadRight.addEventListener('mousedown', handleTouchStart('ArrowRight'));
+        dpadRight.addEventListener('mouseup', handleTouchEnd('ArrowRight'));
+        dpadRight.addEventListener('mouseleave', handleTouchEnd('ArrowRight'));
+        
+        dpadDown.addEventListener('mousedown', handleTouchStart('ArrowDown'));
+        dpadDown.addEventListener('mouseup', handleTouchEnd('ArrowDown'));
+        dpadDown.addEventListener('mouseleave', handleTouchEnd('ArrowDown'));
+        
+        dpadLeft.addEventListener('mousedown', handleTouchStart('ArrowLeft'));
+        dpadLeft.addEventListener('mouseup', handleTouchEnd('ArrowLeft'));
+        dpadLeft.addEventListener('mouseleave', handleTouchEnd('ArrowLeft'));
+        
+        rebButton.addEventListener('mousedown', (e) => {
+            this.keys[' '] = true;
+        });
+        
+        rebButton.addEventListener('mouseup', (e) => {
+            this.keys[' '] = false;
+        });
+        
+        rebButton.addEventListener('mouseleave', (e) => {
+            this.keys[' '] = false;
+        });
+    }
+    
+    /**
+     * Detect mobile devices and adjust game settings
+     * @private
+     */
+    _setupMobileDetection() {
+        // Simple mobile detection
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 600;
+        
+        // If mobile, show mobile controls
+        if (isMobile) {
+            // Set a flag for mobile mode
+            this.isMobileDevice = true;
+            
+            // Initialize touch controls
+            this.touchControls = new TouchControls(this);
+            
+            // Show mobile controls when game starts
+            this.addEventListener('gameStarted', () => {
+                document.getElementById('mobile-controls').classList.remove('hidden');
+            });
+            
+            // Hide mobile controls when game ends
+            this.addEventListener('gameEnded', () => {
+                document.getElementById('mobile-controls').classList.add('hidden');
+            });
+            
+            // Adjust player speed for touch controls (slightly slower for better control)
+            if (this.player) {
+                this.player.speed *= 0.9;
+            }
+            
+            // Show mobile controls usage message at first game start
+            if (!localStorage.getItem('mobileControlsShown')) {
+                this.addEventListener('gameStarted', () => {
+                    setTimeout(() => {
+                        this.ui.showMessage(GameTexts.messages.touchControls, 5000);
+                        localStorage.setItem('mobileControlsShown', 'true');
+                    }, 2000);
+                });
+            }
+        } else {
+            this.isMobileDevice = false;
+        }
+    }
+    
+    /**
+     * Add event listener for custom game events
+     * @param {string} event - Event name
+     * @param {Function} callback - Callback function
+     */
+    addEventListener(event, callback) {
+        if (!this.eventListeners) {
+            this.eventListeners = {};
+        }
+        
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
+        }
+        
+        this.eventListeners[event].push(callback);
+    }
+    
+    /**
+     * Trigger a custom game event
+     * @param {string} event - Event name
+     * @param {any} data - Event data
+     */
+    triggerEvent(event, data) {
+        if (!this.eventListeners || !this.eventListeners[event]) {
+            return;
+        }
+        
+        this.eventListeners[event].forEach(callback => {
+            callback(data);
+        });
     }
 } 
