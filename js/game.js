@@ -9,7 +9,7 @@ class Game {
         
         // Set canvas dimensions
         this.width = 800;
-        this.height = 600;
+        this.height = 560; // Reduced by 40px to account for HUD space
         canvas.width = this.width;
         canvas.height = this.height;
         

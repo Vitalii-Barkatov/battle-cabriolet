@@ -17,11 +17,17 @@ const GameTexts = {
         share: "Поділитися",
         donate: "Підтримати",
         leaderboard: "Таблиця лідерів",
-        introduction: "Рухайте платформу стрілками ←↑↓→.\n" +
-            "Активуйте РЕБ клавішею ʼпробілʼ (тривалість 3с, перезарядка 10с).\n" +
-            "Виконуйте місії, щоб отримати +10 очок.\n" +
-            "Знищуйте дрони за допомогою РЕБа, щоб отримати +5 очок.\n" +
-            "Уникайте мін та ворожих дронів - одне влучення означає знищення!"
+        introduction: "<div class='instructions-table'>" +
+            "<div class='instruction-row'><div class='instruction-label'>Рух платформи</div><div class='instruction-value'>←↑↓→</div></div>" +
+            "<div class='instruction-row'><div class='instruction-label'>Активація РЕБ</div><div class='instruction-value'>SPACE  (працює 3с, перезарядка 10с)</div></div>" +
+            "</div>" +
+            "<div class='instructions-spacing'></div>" +
+            "<div class='instructions-table'>" +
+            "<div class='instruction-row'><div class='instruction-label'>Виконана місія</div><div class='instruction-value'>+10 очок</div></div>" +
+            "<div class='instruction-row'><div class='instruction-label'>Знищений дрон</div><div class='instruction-value'>+5 очок</div></div>" +
+            "</div>" +
+            "<div class='instructions-spacing'></div>" +
+            "<div class='instructions-warning'>Уникайте мін та ворожих дронів - одне влучення означає знищення!</div>"
     },
     
     // Game Over Screen

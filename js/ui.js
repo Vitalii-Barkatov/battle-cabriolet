@@ -191,11 +191,17 @@ class UI {
         document.getElementById('cancel-submit-button').textContent = GameTexts.leaderboard.close;
         document.getElementById('name-required-error').textContent = GameTexts.leaderboard.nameRequired;
         
-        // Add leaderboard button to game over screen
-        const leaderboardButton = document.createElement('button');
-        leaderboardButton.id = 'view-leaderboard-button';
-        leaderboardButton.textContent = GameTexts.leaderboard.viewLeaderboard;
-        gameOverScreen.querySelector('.donation-section').insertAdjacentElement('afterend', leaderboardButton);
+        // Use the existing leaderboard button from HTML instead of creating a new one
+        const viewLeaderboardButton = document.getElementById('view-leaderboard-button');
+        if (viewLeaderboardButton) {
+            viewLeaderboardButton.textContent = GameTexts.leaderboard.viewLeaderboard;
+        } else {
+            // If for some reason the button doesn't exist in HTML, create it
+            const leaderboardButton = document.createElement('button');
+            leaderboardButton.id = 'view-leaderboard-button';
+            leaderboardButton.textContent = GameTexts.leaderboard.viewLeaderboard;
+            gameOverScreen.querySelector('.donation-section').insertAdjacentElement('afterend', leaderboardButton);
+        }
     }
 
     /**
