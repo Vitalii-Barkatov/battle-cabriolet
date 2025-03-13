@@ -4,6 +4,13 @@
  */
 
 const GameTexts = {
+    // Global elements
+    global: {
+        gameTitle: "Бойовий кабріолет",
+        bestScore: "Кращий результат:",
+        footerLink: "(Не) З Неба"
+    },
+    
     // Menu Screen
     menu: {
         howToPlay: "Як грати",
@@ -30,21 +37,34 @@ const GameTexts = {
     gameOver: {
         title: "Гра закінчена",
         finalScore: "Фінальний рахунок: ",
-        donationText: "Ця гра створена, щоб популяризувати наш збір на Беспілотну платфорому і РЕБ до неї для ББС ʼНебесна Мараʼ 43ї ОМБр. " +
-        "<br>Тому, прошу тебе долучитись донатом і поділитись грою з друзями. " +
-        "<br>Дякую за підтримку!",
+        donationText: "Ця гра створена, щоб популяризувати наш збір на Беспілотну платфорому і РЕБ до неї для ББС ʼНебесна Мараʼ 43ї ОМБр.\n" +
+        "Тому, прошу тебе долучитись донатом і поділитись грою з друзями.\n" +
+        "Дякую за підтримку!",
         qrPlaceholder: "QR КОД ТУТ",
-        promoCodePlaceholder: "Введіть промокод...",
-        submitCode: "Відправити",
+        promoCodePlaceholder: "Введіть код...",
+        promoCodeInstructions: "Ти можеш продовжити гру зберігши рахунок. Для цього отримай код на сторінці банки після донату :)",
+        submitCode: "Продовжити",
         restartGame: "Почати заново",
-        shareText: (score) => `Я набрав ${score} очок у грі Cabriolet! Спробуй сам!`,
+        shareText: (score) => `Я набрав ${score} очок у грі Battle Cabriolet! Спробуй сам!`,
         shareSuccess: "Текст для поширення скопійовано в буфер обміну!"
+    },
+    
+    // Donation Screen
+    donation: {
+        title: "Підтримати проєкт",
+        backToMenu: "Назад до меню",
+        links: {
+            monobank: "Банка",
+            privat: "Конверт",
+            paypal: "PayPal"
+        }
     },
     
     // Mission Preparation Screen
     missionPrep: {
         title: "Готуйся",
         missionTypeLabel: "Тип місії: ",
+        countdownInitial: "5",
         missionTypes: {
             evacuation: "Евакуація пораненого",
             delivery: "Доставка боєприпасів"
@@ -82,6 +102,23 @@ const GameTexts = {
         invalidCode: "Недійсний промокод!",
         revivalSuccess: "Відродження успішне! Гра продовжена зі збереженням рахунку.",
         droneDestroyed: (count, points) => `+${points} очок! ${count} дрон${count > 1 ? 'и' : ''} знищено!`
+    },
+    
+    // Leaderboard
+    leaderboard: {
+        title: "Рейтинг гравців",
+        yourScore: "Твій рахунок: ",
+        enterName: "Введи своє ім'я:",
+        submit: "Відправити",
+        close: "Закрити",
+        loading: "Завантаження результатів...",
+        error: "Помилка завантаження. Спробуйте пізніше.",
+        nameRequired: "Будь ласка, введіть ім'я",
+        scoreSubmitted: "Твій результат додано до таблиці лідерів!",
+        rank: "Ранг",
+        name: "Ім'я",
+        score: "Рахунок",
+        viewLeaderboard: "Переглянути таблицю лідерів"
     }
 };
 

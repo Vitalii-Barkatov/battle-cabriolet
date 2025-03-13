@@ -363,6 +363,7 @@ class AudioManager {
             { id: 'sfx_drone_hum', path: 'assets/audio/drone_hum.mp3' },
             { id: 'sfx_reb_activate', path: 'assets/audio/reb_activate.mp3' },
             { id: 'sfx_drone_destroyed', path: 'assets/audio/drone_destroyed.mp3' },
+            { id: 'sfx_explosion', path: 'assets/audio/explosion.mp3' },
             { id: 'sfx_mission_complete', path: 'assets/audio/mission_complete.mp3' },
             { id: 'sfx_game_over', path: 'assets/audio/game_over.mp3' },
             { id: 'sfx_button_click', path: 'assets/audio/button_click.mp3' }

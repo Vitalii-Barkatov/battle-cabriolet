@@ -9,6 +9,9 @@ class UI {
         this.score = 0;
         this.bestScore = loadFromLocalStorage('bestScore', 0);
         
+        // Create leaderboard manager
+        this.leaderboardManager = new LeaderboardManager();
+        
         // UI state flags
         this.shouldStart = false;
         this.shouldRestart = false;
@@ -76,6 +79,11 @@ class UI {
      * @private
      */
     _initializeTextContent() {
+        // Global elements
+        document.getElementById('game-title').textContent = GameTexts.global.gameTitle;
+        document.getElementById('best-score-label').textContent = GameTexts.global.bestScore;
+        document.getElementById('footer-link').textContent = GameTexts.global.footerLink;
+        
         // Menu screen
         this.startButton.textContent = GameTexts.menu.startGame;
         this.howToPlayButton.textContent = GameTexts.menu.howToPlay;
@@ -117,12 +125,27 @@ class UI {
         
         // Set donation text
         const donationP = gameOverScreen.querySelector('.donation-section p');
-        donationP.textContent = GameTexts.gameOver.donationText;
+        donationP.innerHTML = GameTexts.gameOver.donationText.replace(/\n/g, '<br>');
+        
+        // Set promo code instructions
+        const promoInstructions = document.querySelector('.promo-code-instructions');
+        if (promoInstructions) {
+            promoInstructions.textContent = GameTexts.gameOver.promoCodeInstructions;
+        }
+        
+        // Set donation screen text and elements
+        const donationScreen = document.getElementById('donation-screen');
+        document.getElementById('donation-title').textContent = GameTexts.donation.title;
+        this.backFromDonationButton.textContent = GameTexts.donation.backToMenu;
+        
+        // Set donation links text
+        document.getElementById('monobank-link').textContent = GameTexts.donation.links.monobank;
+        document.getElementById('privat-link').textContent = GameTexts.donation.links.privat;
+        document.getElementById('paypal-link').textContent = GameTexts.donation.links.paypal;
         
         // Set donation screen text (same as game over screen)
-        const donationScreen = document.getElementById('donation-screen');
         const donationScreenP = donationScreen.querySelector('.donation-section p');
-        donationScreenP.textContent = GameTexts.gameOver.donationText;
+        donationScreenP.innerHTML = GameTexts.gameOver.donationText.replace(/\n/g, '<br>');
         
         // Set promo code placeholder
         this.promoCodeInput.placeholder = GameTexts.gameOver.promoCodePlaceholder;
@@ -136,6 +159,9 @@ class UI {
         missionPrepScreen.querySelector('h1').textContent = GameTexts.missionPrep.title;
         missionPrepScreen.querySelector('h2').innerHTML = GameTexts.missionPrep.missionTypeLabel + 
             '<span id="mission-type">' + GameTexts.missionPrep.missionTypes.evacuation + '</span>';
+        
+        // Set countdown initial value
+        document.getElementById('countdown').textContent = GameTexts.missionPrep.countdownInitial;
             
         // HUD elements
         document.getElementById('score').innerHTML = GameTexts.hud.score + 
@@ -145,6 +171,28 @@ class UI {
             '<span id="objective-text">' + GameTexts.mission.none + '</span>';
             
         document.getElementById('reb-cooldown-label').textContent = GameTexts.hud.ewLabel;
+        
+        // Leaderboard screen
+        document.getElementById('leaderboard-title').textContent = GameTexts.leaderboard.title;
+        document.getElementById('leaderboard-loading').textContent = GameTexts.leaderboard.loading;
+        document.getElementById('leaderboard-error').textContent = GameTexts.leaderboard.error;
+        document.getElementById('leaderboard-rank-header').textContent = GameTexts.leaderboard.rank;
+        document.getElementById('leaderboard-name-header').textContent = GameTexts.leaderboard.name;
+        document.getElementById('leaderboard-score-header').textContent = GameTexts.leaderboard.score;
+        document.getElementById('leaderboard-close-button').textContent = GameTexts.leaderboard.close;
+        
+        // Submit score screen
+        document.getElementById('submit-score-title').textContent = GameTexts.leaderboard.title;
+        document.getElementById('player-name-label').textContent = GameTexts.leaderboard.enterName;
+        document.getElementById('submit-score-button').textContent = GameTexts.leaderboard.submit;
+        document.getElementById('cancel-submit-button').textContent = GameTexts.leaderboard.close;
+        document.getElementById('name-required-error').textContent = GameTexts.leaderboard.nameRequired;
+        
+        // Add leaderboard button to game over screen
+        const leaderboardButton = document.createElement('button');
+        leaderboardButton.id = 'view-leaderboard-button';
+        leaderboardButton.textContent = GameTexts.leaderboard.viewLeaderboard;
+        gameOverScreen.querySelector('.donation-section').insertAdjacentElement('afterend', leaderboardButton);
     }
 
     /**
@@ -217,6 +265,36 @@ class UI {
                 this.audioManager.toggleMute();
             }
         });
+        
+        // Leaderboard button on game over screen
+        document.getElementById('view-leaderboard-button').addEventListener('click', () => {
+            this.audioManager.playSfx('sfx_button_click');
+            this._loadAndShowLeaderboard();
+        });
+        
+        // Leaderboard close button
+        document.getElementById('leaderboard-close-button').addEventListener('click', () => {
+            this.audioManager.playSfx('sfx_button_click');
+            this.showScreen('gameOver');
+        });
+        
+        // Submit score button
+        document.getElementById('submit-score-button').addEventListener('click', () => {
+            this._handleScoreSubmit();
+        });
+        
+        // Cancel submit button
+        document.getElementById('cancel-submit-button').addEventListener('click', () => {
+            this.audioManager.playSfx('sfx_button_click');
+            this.showScreen('gameOver');
+        });
+        
+        // Player name input - listen for Enter key
+        document.getElementById('player-name').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                this._handleScoreSubmit();
+            }
+        });
     }
 
     /**
@@ -226,6 +304,8 @@ class UI {
     showScreen(screenName) {
         // Get all screen elements
         const missionPreparationScreen = document.getElementById('mission-preparation-screen');
+        const leaderboardScreen = document.getElementById('leaderboard-screen');
+        const submitScoreScreen = document.getElementById('submit-score-screen');
         
         // Hide all screens
         this.menuScreen.classList.add('hidden');
@@ -234,6 +314,12 @@ class UI {
         this.donationScreen.classList.add('hidden');
         if (missionPreparationScreen) {
             missionPreparationScreen.classList.add('hidden');
+        }
+        if (leaderboardScreen) {
+            leaderboardScreen.classList.add('hidden');
+        }
+        if (submitScoreScreen) {
+            submitScoreScreen.classList.add('hidden');
         }
         this.uiOverlay.classList.add('hidden');
         this.hud.classList.add('hidden');
@@ -262,6 +348,16 @@ class UI {
             case 'missionPreparation':
                 this.uiOverlay.classList.remove('hidden');
                 missionPreparationScreen.classList.remove('hidden');
+                break;
+            case 'leaderboard':
+                this.uiOverlay.classList.remove('hidden');
+                leaderboardScreen.classList.remove('hidden');
+                break;
+            case 'submitScore':
+                this.uiOverlay.classList.remove('hidden');
+                submitScoreScreen.classList.remove('hidden');
+                document.getElementById('your-score-text').textContent = 
+                    GameTexts.leaderboard.yourScore + this.score;
                 break;
             case 'game':
                 this.hud.classList.remove('hidden');
@@ -381,6 +477,20 @@ class UI {
         
         // Always use the stored imageManager first, then fall back to parameter if needed
         this._updateQRCode(this.imageManager || imageManager);
+        
+        // Check if score qualifies for leaderboard
+        this.leaderboardManager.wouldPlaceOnLeaderboard(this.score)
+            .then(qualifies => {
+                if (qualifies) {
+                    // Show submit score popup automatically
+                    setTimeout(() => {
+                        this.showScreen('submitScore');
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error("Error checking leaderboard placement:", error);
+            });
     }
     
     /**
@@ -609,5 +719,118 @@ class UI {
                 }
             }
         }, 1000);
+    }
+
+    /**
+     * Load and display the leaderboard
+     * @private
+     */
+    _loadAndShowLeaderboard() {
+        // Show the leaderboard screen first
+        this.showScreen('leaderboard');
+        
+        // Get references to elements
+        const loadingMsg = document.getElementById('leaderboard-loading');
+        const errorMsg = document.getElementById('leaderboard-error');
+        const table = document.getElementById('leaderboard-table');
+        const tableBody = document.getElementById('leaderboard-body');
+        
+        // Show loading message
+        loadingMsg.classList.remove('hidden');
+        errorMsg.classList.add('hidden');
+        table.classList.add('hidden');
+        
+        // Clear any existing scores
+        tableBody.innerHTML = '';
+        
+        // Load scores from Firebase
+        this.leaderboardManager.getTopScores()
+            .then(scores => {
+                // Hide loading message, show table
+                loadingMsg.classList.add('hidden');
+                table.classList.remove('hidden');
+                
+                // Generate table rows
+                scores.forEach((score, index) => {
+                    const row = document.createElement('tr');
+                    
+                    // Check if this is the current player's score
+                    const isMyScore = score.score === this.score;
+                    if (isMyScore) {
+                        row.classList.add('my-score-row');
+                    }
+                    
+                    // Rank column
+                    const rankCell = document.createElement('td');
+                    rankCell.textContent = (index + 1);
+                    row.appendChild(rankCell);
+                    
+                    // Name column
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = score.name;
+                    row.appendChild(nameCell);
+                    
+                    // Score column
+                    const scoreCell = document.createElement('td');
+                    scoreCell.textContent = score.score;
+                    row.appendChild(scoreCell);
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // If no scores, show message
+                if (scores.length === 0) {
+                    const noScoresRow = document.createElement('tr');
+                    const noScoresCell = document.createElement('td');
+                    noScoresCell.colSpan = 3;
+                    noScoresCell.textContent = 'Ще немає результатів';
+                    noScoresRow.appendChild(noScoresCell);
+                    tableBody.appendChild(noScoresRow);
+                }
+            })
+            .catch(error => {
+                console.error("Error loading leaderboard:", error);
+                loadingMsg.classList.add('hidden');
+                errorMsg.classList.remove('hidden');
+            });
+    }
+
+    /**
+     * Handle score submission
+     * @private
+     */
+    _handleScoreSubmit() {
+        this.audioManager.playSfx('sfx_button_click');
+        
+        const nameInput = document.getElementById('player-name');
+        const playerName = nameInput.value.trim();
+        const errorElement = document.getElementById('name-required-error');
+        
+        // Validate player name
+        if (!playerName) {
+            errorElement.classList.remove('hidden');
+            nameInput.focus();
+            return;
+        }
+        
+        // Hide error message if visible
+        errorElement.classList.add('hidden');
+        
+        // Submit the score
+        this.leaderboardManager.submitScore(playerName, this.score)
+            .then(() => {
+                // Show success message
+                this.showMessage(GameTexts.leaderboard.scoreSubmitted);
+                
+                // Show the leaderboard
+                this._loadAndShowLeaderboard();
+                
+                // Save player name for next time
+                saveToLocalStorage('playerName', playerName);
+            })
+            .catch(error => {
+                console.error("Error submitting score:", error);
+                this.showMessage("Error submitting score. Please try again.");
+            });
     }
 } 

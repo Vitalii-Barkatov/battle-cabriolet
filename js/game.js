@@ -798,19 +798,27 @@ class Game {
     _handlePlayerDeath() {
         this.isGameOver = true;
         
-        // Stop all sound effects, including platform movement
-        this.audioManager.stopAllSfx();
+        // Play explosion sound when player dies
+        this.audioManager.playSfx('sfx_explosion');
         
-        // Play menu music when game is over
-        this.audioManager.playMusic('menu');
+        // Stop all other sound effects except the explosion sound
+        this.audioManager.stopSfx('sfx_platform_move');
+        this.audioManager.stopSfx('sfx_drone_hum');
+        this.audioManager.stopSfx('sfx_reb_activate');
         
-        // Fully reset drone manager to initial state
-        if (this.droneManager) {
-            this.droneManager.fullReset();
-        }
-        
-        // Pass the imageManager to show the QR code
-        this.ui.showGameOver(this.imageManager);
+        // Delay showing game over to allow explosion sound to play
+        setTimeout(() => {
+            // Play menu music when game is over
+            this.audioManager.playMusic('menu');
+            
+            // Fully reset drone manager to initial state
+            if (this.droneManager) {
+                this.droneManager.fullReset();
+            }
+            
+            // Pass the imageManager to show the QR code
+            this.ui.showGameOver(this.imageManager);
+        }, 1000); // Wait 1 second for explosion sound to play
     }
 
     /**
