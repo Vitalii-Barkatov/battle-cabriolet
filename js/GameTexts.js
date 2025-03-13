@@ -8,7 +8,7 @@ const GameTexts = {
     global: {
         gameTitle: "Бойовий кабріолет",
         bestScore: "Кращий результат:",
-        footerLink: "(Не) З Неба"
+        footerLink: "Більше про ініціативу (Не) З Неба"
     },
     
     // Menu Screen
@@ -39,7 +39,7 @@ const GameTexts = {
         "Дякую за підтримку!",
         qrPlaceholder: "QR КОД ТУТ",
         promoCodePlaceholder: "Введіть код...",
-        promoCodeInstructions: "Ти можеш продовжити гру зберігши рахунок. Для цього отримай код на сторінці банки після донату :)",
+        promoCodeInstructions: "Ти можеш продовжити гру зберігши рахунок. Для цього отримай код на сторінці mono-банки після донату :)",
         submitCode: "Продовжити",
         restartGame: "Почати заново",
         shareText: (score) => `Я набрав ${score} очок у грі Battle Cabriolet! Спробуй сам!`,
@@ -51,9 +51,7 @@ const GameTexts = {
         title: "Підтримати проєкт",
         backToMenu: "Назад до меню",
         links: {
-            monobank: "Банка",
-            privat: "Конверт",
-            paypal: "PayPal"
+            monobank: "Підтримати"
         }
     },
     

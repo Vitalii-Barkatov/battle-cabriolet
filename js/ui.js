@@ -124,9 +124,7 @@ class UI {
         
         // Set donation links text for both screens
         const donationScreenLinks = {
-            'monobank-link': GameTexts.donation.links.monobank,
-            'privat-link': GameTexts.donation.links.privat,
-            'paypal-link': GameTexts.donation.links.paypal
+            'monobank-link': GameTexts.donation.links.monobank
         };
         
         // Set text for game over screen links
