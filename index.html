@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бойовий кабріолет</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-overlay" class="hidden">
+            <div id="menu-screen" class="ui-screen">
+                <h1>Бойовий кабріолет</h1>
+                <div id="intro-text" class="introduction"></div>
+                <div class="menu-buttons">
+                    <button id="start-button"></button>
+                    <button id="how-to-play-button"></button>
+                    <button id="donate-button"></button>
+                </div>
+                <div class="best-score-container">Кращий результат: <span id="best-score">0</span></div>
+            </div>
+            <div id="how-to-play-screen" class="ui-screen hidden">
+                <h1></h1>
+                <div class="instructions">
+                    <!-- Instructions will be dynamically generated -->
+                </div>
+                <button id="back-to-menu-button"></button>
+            </div>
+            <div id="game-over-screen" class="ui-screen hidden">
+                <h1></h1>
+                <div class="final-score"></div>
+                <div class="donation-section">
+                    <p></p>
+                    <div class="qr-placeholder"></div>
+                    <div class="donation-links">
+                        <a href="https://send.monobank.ua/jar/3EhDdpcmBW" target="_blank" class="donation-link">Банка</a>
+                        <a href="https://www.privat24.ua/send/ggzmq" target="_blank" class="donation-link">Конверт</a>
+                        <a href="https://www.paypal.com/donate/?hosted_button_id=BG7AFP2AHF4AE" target="_blank" class="donation-link">PayPal</a>
+                    
+                    </div>
+                    <input type="text" id="promo-code">
+                    <button id="submit-code-button"></button>
+                </div>
+                <button id="restart-button"></button>
+            </div>
+            <div id="donation-screen" class="ui-screen hidden">
+                <h1>Підтримати проєкт</h1>
+                <div class="donation-section">
+                    <p></p>
+                    <div class="qr-placeholder donation-qr"></div>
+                    <div class="donation-links">
+                        <a href="https://send.monobank.ua/jar/3EhDdpcmBW" target="_blank" class="donation-link">Банка</a>
+                        <a href="https://www.privat24.ua/send/ggzmq" target="_blank" class="donation-link">Конверт</a>
+                        <a href="https://www.paypal.com/donate/?hosted_button_id=BG7AFP2AHF4AE" target="_blank" class="donation-link">PayPal</a>
+                       
+                    </div>
+                </div>
+                <button id="back-from-donation-button">Назад до меню</button>
+            </div>
+            <div id="mission-preparation-screen" class="ui-screen hidden">
+                <h1></h1>
+                <div class="mission-info">
+                    <h2></h2>
+                    <p id="mission-description"></p>
+                </div>
+                <div class="countdown-container">
+                    <div id="countdown">5</div>
+                </div>
+            </div>
+        </div>
+        <div id="hud" class="hidden">
+            <div id="score"></div>
+            <div id="mission-objective"></div>
+            <div id="reb-cooldown-container">
+                <div id="reb-cooldown-label"></div>
+                <div id="reb-cooldown-bar">
+                    <div id="reb-cooldown-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer-container">
+        <a href="https://nezneba.in.ua/" target="_blank" class="footer-link">(Не) З Неба</a>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/GameTexts.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/audioManager.js"></script>
+    <script src="js/imageManager.js"></script>
+    <script src="js/mapGenerator.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/drone.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/missionManager.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 

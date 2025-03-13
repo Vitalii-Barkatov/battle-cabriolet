@@ -1,0 +1,277 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background-color: #000;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px 0;
+    margin: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+#game-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+    border: 4px solid #444;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* UI Screens */
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.ui-screen {
+    width: 80%;
+    max-width: 600px;
+    background-color: rgba(30, 30, 30, 0.9);
+    border: 3px solid #555;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+}
+
+h1 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #ffcc00;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+button {
+    background-color: #444;
+    color: #fff;
+    border: 2px solid #666;
+    padding: 10px 20px;
+    margin: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background-color: #666;
+    transform: scale(1.05);
+}
+
+.best-score {
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.instructions p {
+    margin-bottom: 10px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.final-score {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.introduction {
+    margin: 0 auto 20px;
+    padding: 10px;
+    font-size: 16px;
+    max-width: 80%;
+    line-height: 1.4;
+    color: #e6e6e6;
+    text-align: center;
+}
+
+.donation-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(50, 50, 50, 0.7);
+    border-radius: 5px;
+}
+
+.qr-placeholder {
+    width: 150px;
+    height: 150px;
+    background-color: #fff;
+    color: #000;
+    margin: 15px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+}
+
+.donation-links {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+}
+
+.donation-link {
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: #3498db;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: all 0.2s;
+    min-width: 100px;
+    text-align: center;
+}
+
+.donation-link:hover {
+    background-color: #2980b9;
+    transform: scale(1.05);
+}
+
+#promo-code {
+    padding: 8px;
+    width: 80%;
+    max-width: 300px;
+    margin-bottom: 10px;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+}
+
+/* HUD */
+#hud {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 10px;
+    z-index: 5;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+}
+
+#score {
+    text-align: left;
+}
+
+#mission-objective {
+    text-align: center;
+    flex-grow: 1;
+    margin: 0 10px;
+}
+
+#reb-cooldown-container {
+    display: flex;
+    align-items: center;
+}
+
+#reb-cooldown-label {
+    margin-right: 5px;
+}
+
+#reb-cooldown-bar {
+    width: 100px;
+    height: 20px;
+    background-color: rgba(50, 50, 50, 0.7);
+    border: 1px solid #555;
+    overflow: hidden;
+}
+
+#reb-cooldown-fill {
+    height: 100%;
+    width: 100%;
+    background-color: #3498db;
+    transition: width 0.3s ease;
+}
+
+/* Mission Preparation Screen */
+.mission-info {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(50, 50, 50, 0.7);
+    border-radius: 5px;
+    text-align: left;
+}
+
+.mission-info h2 {
+    color: #ffcc00;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.mission-info p {
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.countdown-container {
+    margin: 30px auto 10px;
+}
+
+#countdown {
+    font-size: 72px;
+    font-weight: bold;
+    color: #ffcc00;
+    background-color: rgba(50, 50, 50, 0.7);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    border: 3px solid #ffcc00;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.5s ease;
+}
+
+/* Footer styling */
+.footer-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.footer-link {
+    display: inline-block;
+    color: #3498db;
+    text-decoration: underline;
+    font-size: 18px;
+    font-weight: normal;
+    transition: all 0.2s;
+}
+
+.footer-link:hover {
+    color: #2980b9;
+    transform: scale(1.05);
+} 
