@@ -227,9 +227,9 @@ class DroneManager {
         this.pendingDrone = null;
         
         // Static values that don't change
-        this.initialSpawnRange = { min: 2000, max: 5000 }; // 2-5 seconds for first drone
+        this.initialSpawnRange = { min: 7000, max: 10000 }; // 7-10 seconds for first drone
         this.baseSpawnInterval = 15000; // Base interval for calculating subsequent spawns
-        this.spawnReduction = 0.9; // Reduce spawn time by 10% each spawn
+        this.spawnReduction = 0.95; // Reduce spawn time by 5% each spawn
         
         // Drone spawning (these will persist between rounds)
         this.spawnInterval = this.baseSpawnInterval; // Regular interval between drones
@@ -238,10 +238,10 @@ class DroneManager {
         
         // Drone speed progression (these will persist between rounds)
         this.speedMultiplier = 1.0; // Starting multiplier
-        this.speedIncrease = 0.1; // Each drone is 10% faster than the previous
+        this.speedIncrease = 0.05; // Each drone is 5% faster than the previous
         
-        // Warning timer - exactly 2 seconds as requested
-        this.warningTime = 2000; // 2 seconds warning before spawn
+        // Sound starts playing 2 seconds before drone appears
+        this.warningTime = 2000; // 2 seconds sound before spawn
         this.warningActive = false;
     }
 
@@ -269,18 +269,18 @@ class DroneManager {
         // Update spawn timer
         this.spawnTimer -= deltaTime;
         
-        // Check if we should start playing the warning sound
+        // Check if we should start playing the drone sound (2 seconds before visual appearance)
         if (this.spawnTimer <= this.warningTime && !this.warningActive) {
-            console.log("Creating drone and starting sound 2 seconds before spawn");
+            console.log("Starting drone sound 2 seconds before visual appearance");
             
-            // Create the drone now but don't add it to the active drones array yet
+            // Create the drone but don't make it visible yet
             this.pendingDrone = Drone.createRandomDrone(this.map, this.player, this.audioManager);
             
             // Apply current speed multiplier to this drone
             this.pendingDrone.speed *= this.speedMultiplier;
             
-            // Start playing the drone sound immediately (as the warning)
-            // This will continue playing as the drone becomes visible and moves
+            // Start playing the drone sound 2 seconds before it appears
+            // The sound will continue playing as the drone becomes visible
             this.pendingDrone._startHumSound();
             
             this.warningActive = true;
@@ -404,7 +404,7 @@ class DroneManager {
             this.pendingDrone = null;
         }
         
-        // Reset the spawn timer for a new round (random 2-5 seconds)
+        // Reset the spawn timer for a new round (random 7-10 seconds)
         this.spawnTimer = this._getFirstDroneSpawnTime();
         this.warningActive = false;
         
