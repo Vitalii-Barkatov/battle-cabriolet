@@ -19,7 +19,6 @@ class UI {
         
         // UI elements
         this.menuScreen = document.getElementById('menu-screen');
-        this.howToPlayScreen = document.getElementById('how-to-play-screen');
         this.gameOverScreen = document.getElementById('game-over-screen');
         this.donationScreen = document.getElementById('donation-screen');
         this.uiOverlay = document.getElementById('ui-overlay');
@@ -27,9 +26,8 @@ class UI {
         
         // Buttons
         this.startButton = document.getElementById('start-button');
-        this.howToPlayButton = document.getElementById('how-to-play-button');
         this.donateButton = document.getElementById('donate-button');
-        this.backToMenuButton = document.getElementById('back-to-menu-button');
+        this.leaderboardButton = document.getElementById('leaderboard-button');
         this.backFromDonationButton = document.getElementById('back-from-donation-button');
         this.restartButton = document.getElementById('restart-button');
         this.submitCodeButton = document.getElementById('submit-code-button');
@@ -86,31 +84,14 @@ class UI {
         
         // Menu screen
         this.startButton.textContent = GameTexts.menu.startGame;
-        this.howToPlayButton.textContent = GameTexts.menu.howToPlay;
         this.donateButton.textContent = GameTexts.menu.donate;
+        this.leaderboardButton.textContent = GameTexts.menu.leaderboard;
         
         // Set introduction text
         const introTextElement = document.getElementById('intro-text');
         if (introTextElement) {
             introTextElement.textContent = GameTexts.menu.introduction;
         }
-        
-        // How to play screen
-        const howToPlayScreen = document.getElementById('how-to-play-screen');
-        howToPlayScreen.querySelector('h1').textContent = GameTexts.howToPlay.title;
-        
-        // Update instructions
-        const instructionsDiv = howToPlayScreen.querySelector('.instructions');
-        instructionsDiv.innerHTML = ''; // Clear existing content
-        
-        // Add instruction paragraphs
-        GameTexts.howToPlay.instructions.forEach(instruction => {
-            const p = document.createElement('p');
-            p.textContent = instruction;
-            instructionsDiv.appendChild(p);
-        });
-        
-        this.backToMenuButton.textContent = GameTexts.howToPlay.backToMenu;
         
         // Game over screen
         const gameOverScreen = document.getElementById('game-over-screen');
@@ -206,12 +187,6 @@ class UI {
             this._handleStartGame();
         });
         
-        // How to play button
-        this.howToPlayButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
-            this.showScreen('howToPlay');
-        });
-        
         // Donate button
         this.donateButton.addEventListener('click', () => {
             this.audioManager.playSfx('sfx_button_click');
@@ -220,12 +195,6 @@ class UI {
             if (this.imageManager) {
                 this._updateDonationQRCode(this.imageManager);
             }
-        });
-        
-        // Back to menu button
-        this.backToMenuButton.addEventListener('click', () => {
-            this.audioManager.playSfx('sfx_button_click');
-            this.showScreen('menu');
         });
         
         // Back from donation button
@@ -295,6 +264,12 @@ class UI {
                 this._handleScoreSubmit();
             }
         });
+        
+        // Leaderboard button (main menu)
+        this.leaderboardButton.addEventListener('click', () => {
+            this.audioManager.playSfx('sfx_button_click');
+            this._loadAndShowLeaderboard();
+        });
     }
 
     /**
@@ -309,7 +284,6 @@ class UI {
         
         // Hide all screens
         this.menuScreen.classList.add('hidden');
-        this.howToPlayScreen.classList.add('hidden');
         this.gameOverScreen.classList.add('hidden');
         this.donationScreen.classList.add('hidden');
         if (missionPreparationScreen) {
@@ -330,10 +304,6 @@ class UI {
                 this.uiOverlay.classList.remove('hidden');
                 this.menuScreen.classList.remove('hidden');
                 this.audioManager.playMusic('menu');
-                break;
-            case 'howToPlay':
-                this.uiOverlay.classList.remove('hidden');
-                this.howToPlayScreen.classList.remove('hidden');
                 break;
             case 'gameOver':
                 this.uiOverlay.classList.remove('hidden');
