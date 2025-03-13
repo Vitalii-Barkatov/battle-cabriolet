@@ -9,11 +9,11 @@ class Game {
         
         // Set canvas dimensions
         this.width = 800;
-        this.height = 560; // Reduced by 40px to account for HUD space
+        this.height = 544; // Adjusted to exactly 17 tiles (17 * 32 = 544) to avoid partial tiles at bottom
         canvas.width = this.width;
         canvas.height = this.height;
         
-        // Define tile size (32x32 grid results in 25x18.75 tiles)
+        // Define tile size (32x32 grid results in 25x17 tiles)
         this.tileSize = 32;
         
         // Create components

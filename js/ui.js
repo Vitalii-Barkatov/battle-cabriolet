@@ -16,6 +16,7 @@ class UI {
         this.shouldStart = false;
         this.shouldRestart = false;
         this.playerRevived = false;
+        this.promoCodeUsed = false; // Track if a promo code has been used this session
         this.previousScreen = 'menu'; // Track which screen the user came from
         this.menuMusicStarted = false; // Track if menu music has started
         
@@ -423,9 +424,17 @@ class UI {
         if (promoCode === "UKRAINE" || promoCode === "CABRIOLET") {
             // Set the flag to revive the player
             this.playerRevived = true;
+            // Mark that a promo code has been used this session
+            this.promoCodeUsed = true;
             
             // Display success message
             this.showMessage(GameTexts.messages.codeAccepted);
+            
+            // Hide the UI overlay and show the HUD to return to the game
+            this.showScreen('game');
+            
+            // Play game music
+            this.audioManager.playMusic('game');
         } else {
             // Display error message
             this.showMessage(GameTexts.messages.invalidCode);
@@ -499,6 +508,16 @@ class UI {
         
         // Always use the stored imageManager first, then fall back to parameter if needed
         this._updateQRCode(this.imageManager || imageManager);
+        
+        // Hide promo code section if already used this session
+        const promoCodeSection = document.querySelector('.promo-code-section');
+        if (promoCodeSection) {
+            if (this.promoCodeUsed) {
+                promoCodeSection.classList.add('hidden');
+            } else {
+                promoCodeSection.classList.remove('hidden');
+            }
+        }
         
         // Check if score qualifies for leaderboard
         this.leaderboardManager.wouldPlaceOnLeaderboard(this.score)
@@ -632,15 +651,6 @@ class UI {
         const messageElement = document.createElement('div');
         messageElement.className = 'game-message';
         messageElement.textContent = message;
-        messageElement.style.position = 'absolute';
-        messageElement.style.top = '50%';
-        messageElement.style.left = '50%';
-        messageElement.style.transform = 'translate(-50%, -50%)';
-        messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-        messageElement.style.color = '#fff';
-        messageElement.style.padding = '10px 20px';
-        messageElement.style.borderRadius = '5px';
-        messageElement.style.transition = 'opacity 0.5s';
         
         // Add to document
         document.getElementById('game-container').appendChild(messageElement);
@@ -661,6 +671,7 @@ class UI {
         this.gameStarted = false;
         this.gameRestarted = false;
         this.playerRevived = false;
+        this.promoCodeUsed = false; // Reset promo code usage on new game
     }
 
     /**

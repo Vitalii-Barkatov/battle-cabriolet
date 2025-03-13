@@ -943,11 +943,52 @@ class MapGenerator {
      * @private
      */
     _placeMines(tiles, startPos, goalPos) {
-        const mineCount = getRandomInt(1, 2);
+        // Vary mine count between 3 and 6
+        const mineCount = getRandomInt(3, 6);
         const mines = [];
         const safeRadius = 3; // Safe distance from start and goal
         
-        for (let i = 0; i < mineCount; i++) {
+        // First pass: find all road positions (ASPHALT tiles)
+        const roadPositions = [];
+        for (let y = 0; y < this.tilesY; y++) {
+            for (let x = 0; x < this.tilesX; x++) {
+                if (tiles[y][x] === this.terrainTypes.ASPHALT) {
+                    // Skip if too close to start or goal
+                    if (calculateDistance(x, y, startPos.tileX, startPos.tileY) >= safeRadius &&
+                        calculateDistance(x, y, goalPos.tileX, goalPos.tileY) >= safeRadius) {
+                        roadPositions.push({x, y});
+                    }
+                }
+            }
+        }
+        
+        // Ensure we have at least one mine on a road if roads exist
+        if (roadPositions.length > 0) {
+            // Select a random road position
+            const roadPos = roadPositions[Math.floor(Math.random() * roadPositions.length)];
+            const tileX = roadPos.x;
+            const tileY = roadPos.y;
+            
+            // Store the original terrain type with the mine information
+            const originalTerrain = tiles[tileY][tileX]; // Should be ASPHALT
+            console.log(`Placing mine on road at [${tileX},${tileY}]`);
+            
+            // Mark the tile as a mine
+            tiles[tileY][tileX] = this.terrainTypes.MINE;
+            
+            // Add to mines array with original terrain information
+            mines.push({
+                x: tileX * this.tileSize,
+                y: tileY * this.tileSize,
+                tileX,
+                tileY,
+                originalTerrain
+            });
+        }
+        
+        // Place remaining mines
+        const remainingMines = mineCount - mines.length;
+        for (let i = 0; i < remainingMines; i++) {
             let tileX, tileY;
             let attempts = 0;
             
@@ -963,6 +1004,7 @@ class MapGenerator {
                 // Only place mines on dry surfaces (dirt or asphalt)
                 tiles[tileY][tileX] === this.terrainTypes.WALL ||
                 tiles[tileY][tileX] === this.terrainTypes.WATER ||
+                tiles[tileY][tileX] === this.terrainTypes.MINE || // Avoid placing on existing mines
                 calculateDistance(tileX, tileY, startPos.tileX, startPos.tileY) < safeRadius ||
                 calculateDistance(tileX, tileY, goalPos.tileX, goalPos.tileY) < safeRadius
             );
