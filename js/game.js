@@ -128,18 +128,18 @@ class Game {
             } else {
                 // In portrait, prepare dimensions for when rotated to landscape
                 // This is just to have reasonable default values when rotated
-                this.width = 800;
+                this.width = 750;
                 this.height = 544;
                 this.tilesX = 25;
                 this.tilesY = 17;
             }
         } else {
             // For desktop, use the original fixed dimensions
-            this.width = 800;
+            this.width = 750;
             this.height = 544; // Adjusted to exactly 17 tiles (17 * 32 = 544)
             
             // Store tile counts for map generation
-            this.tilesX = Math.floor(this.width / this.tileSize); // 25 tiles
+            this.tilesX = Math.floor(this.width / this.tileSize); // 23 tiles
             this.tilesY = Math.floor(this.height / this.tileSize); // 17 tiles
             
             // Ensure any mobile-specific classes are removed

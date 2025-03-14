@@ -11,7 +11,7 @@ class Player {
         this.audioManager = audioManager;
         
         // Movement
-        this.speed = 3.0; // Restore original speed (was reduced to 2.1)
+        this.speed = 2.1; // Reduced by 30% from 3.0
         this.currentSpeed = this.speed;
         this.isMoving = false;
         this.direction = { x: 0, y: 0 };
@@ -324,23 +324,27 @@ class Player {
             { x: bounds.x + bounds.width, y: bounds.y + bounds.height } // Bottom-right
         ];
         
-        // Check if any corner is in a wall
+        // Check if any corner is in a wall or outside the map boundaries
         for (const corner of corners) {
+            // First, check if the corner is outside the canvas boundaries
+            if (corner.x < 0 || corner.y < 0) {
+                return false;
+            }
+            
+            // Calculate the pixel dimensions of the map (based on tiles and tile size)
+            const mapPixelWidth = map.tiles[0].length * map.tileSize;
+            const mapPixelHeight = map.tiles.length * map.tileSize;
+            
+            // Check if we'd move outside the map boundaries
+            if (corner.x >= mapPixelWidth || corner.y >= mapPixelHeight) {
+                return false;
+            }
+            
+            // Now check for walls
             const terrain = MapGenerator.getTerrainAtPosition(map, corner.x, corner.y);
             if (terrain === this.terrainTypes.WALL) {
                 return false;
             }
-        }
-        
-        // Check map boundaries (making sure map.width and map.height exist)
-        if (!map.width || !map.height) {
-            console.warn('Map dimensions missing in _canMove');
-            return true;
-        }
-        
-        if (bounds.x < 0 || bounds.x + bounds.width > map.width || 
-            bounds.y < 0 || bounds.y + bounds.height > map.height) {
-            return false;
         }
         
         return true;

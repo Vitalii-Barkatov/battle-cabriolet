@@ -11,7 +11,7 @@ class Drone {
         this.player = player;
         this.audioManager = audioManager;
         
-        this.speed = 3.24; // Restore original faster speed (was 2.81)
+        this.speed = 2.268; // Reduced by 30% from 3.24
         this.isDestroyed = false;
         this.destroyAnimation = 0;
         
@@ -130,61 +130,65 @@ class Drone {
             ctx.fillStyle = `rgba(255, 100, 0, ${1 - explosionProgress})`;
             ctx.fill();
         } else {
-            // Draw drone at its actual size without enlargement
+            // Draw drone at its actual position, but centered
             const centerX = this.x + this.width / 2;
             const centerY = this.y + this.height / 2;
+            
+            // Make the drone body slightly smaller than the full tile
+            const bodyWidth = this.width * 0.8;
+            const bodyHeight = this.height * 0.8;
             
             // Draw drone body with outline
             ctx.fillStyle = '#E74C3C'; // Red color for enemy drones
             ctx.strokeStyle = '#FFFFFF'; // White outline
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 1;
             
             // Draw the rectangle centered at the drone's position
             ctx.fillRect(
-                centerX - this.width / 2, 
-                centerY - this.height / 2, 
-                this.width, 
-                this.height
+                centerX - bodyWidth / 2, 
+                centerY - bodyHeight / 2, 
+                bodyWidth, 
+                bodyHeight
             );
             ctx.strokeRect(
-                centerX - this.width / 2, 
-                centerY - this.height / 2, 
-                this.width, 
-                this.height
+                centerX - bodyWidth / 2, 
+                centerY - bodyHeight / 2, 
+                bodyWidth, 
+                bodyHeight
             );
             
             // Draw propellers
             ctx.fillStyle = '#7F8C8D'; // Gray color for propellers
-            const propellerSize = this.width / 4;
+            const propellerSize = this.width / 5; // Smaller propellers
             
             // Top-left propeller
             ctx.fillRect(
-                centerX - this.width / 2 - propellerSize / 2, 
-                centerY - this.height / 2 - propellerSize / 2, 
+                centerX - bodyWidth / 2 - propellerSize / 2, 
+                centerY - bodyHeight / 2 - propellerSize / 2, 
                 propellerSize, 
                 propellerSize
             );
             
             // Top-right propeller
             ctx.fillRect(
-                centerX + this.width / 2 - propellerSize / 2, 
-                centerY - this.height / 2 - propellerSize / 2, 
+                centerX + bodyWidth / 2 - propellerSize / 2, 
+                centerY - bodyHeight / 2 - propellerSize / 2, 
                 propellerSize, 
                 propellerSize
             );
             
             // Bottom-left propeller
             ctx.fillRect(
-                centerX - this.width / 2 - propellerSize / 2, 
-                centerY + this.height / 2 - propellerSize / 2, 
+                centerX - bodyWidth / 2 - propellerSize / 2, 
+                centerY + bodyHeight / 2 - propellerSize / 2, 
                 propellerSize, 
                 propellerSize
             );
             
             // Bottom-right propeller
             ctx.fillRect(
-                centerX + this.width / 2 - propellerSize / 2, 
-                centerY + this.height / 2 - propellerSize / 2, 
+                centerX + bodyWidth / 2 - propellerSize / 2, 
+                centerY + bodyHeight / 2 - propellerSize / 2, 
                 propellerSize, 
                 propellerSize
             );
