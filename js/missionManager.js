@@ -56,6 +56,35 @@ class MissionManager {
         // Generate map based on mission type
         this.currentMap = this.mapGenerator.generateMap(this.missionType);
         
+        // Check if map was generated properly
+        if (!this.currentMap) {
+            console.error('Failed to generate map');
+            return null;
+        }
+        
+        // Convert startPos and goalPos to start and goal for easier access
+        if (this.currentMap.startPos) {
+            this.currentMap.start = {
+                x: this.currentMap.startPos.x,
+                y: this.currentMap.startPos.y,
+                tileX: this.currentMap.startPos.tileX,
+                tileY: this.currentMap.startPos.tileY
+            };
+        } else {
+            console.warn('Map missing startPos');
+        }
+        
+        if (this.currentMap.goalPos) {
+            this.currentMap.goal = {
+                x: this.currentMap.goalPos.x,
+                y: this.currentMap.goalPos.y,
+                tileX: this.currentMap.goalPos.tileX,
+                tileY: this.currentMap.goalPos.tileY
+            };
+        } else {
+            console.warn('Map missing goalPos');
+        }
+        
         // Set initial player position at start
         if (this.currentMap.startPos) {
             this.player.x = this.currentMap.startPos.x;
@@ -70,12 +99,41 @@ class MissionManager {
      * @param {Object} map - The map to reset with
      */
     reset(map) {
+        // Verify map is valid before proceeding
+        if (!map) {
+            console.error('Attempted to reset mission with null/undefined map');
+            return;
+        }
+        
         this.currentMap = map;
         this.missionPhase = 0;
         this.missionComplete = false;
         
         // Set appropriate mission type from the map
         this.missionType = map.missionType || this.missionTypes.DELIVERY;
+        
+        // Convert startPos and goalPos to start and goal for easier access
+        if (map.startPos) {
+            this.currentMap.start = {
+                x: map.startPos.x,
+                y: map.startPos.y,
+                tileX: map.startPos.tileX,
+                tileY: map.startPos.tileY
+            };
+        } else {
+            console.warn('Map missing startPos');
+        }
+        
+        if (map.goalPos) {
+            this.currentMap.goal = {
+                x: map.goalPos.x,
+                y: map.goalPos.y,
+                tileX: map.goalPos.tileX,
+                tileY: map.goalPos.tileY
+            };
+        } else {
+            console.warn('Map missing goalPos');
+        }
         
         // Set initial player state based on mission type
         if (this.missionType === this.missionTypes.DELIVERY) {
@@ -94,8 +152,30 @@ class MissionManager {
     update() {
         if (this.missionComplete) return null;
         
+        // First check if currentMap and tileSize are defined
+        if (!this.currentMap || typeof this.currentMap.tileSize !== 'number') {
+            console.warn('Map or tileSize is undefined. Map:', !!this.currentMap, 
+                        'TileSize:', this.currentMap ? this.currentMap.tileSize : undefined);
+            return null;
+        }
+        
         // Check if player reached the objective
         const objective = this.missionPhase === 0 ? this.currentMap.goal : this.currentMap.start;
+        
+        // Safety check - if objective is undefined, we can't proceed
+        if (!objective) {
+            console.warn('Mission objective is undefined. Phase:', this.missionPhase, 
+                         'Map has goal:', !!this.currentMap.goal, 
+                         'Map has start:', !!this.currentMap.start);
+            return null;
+        }
+        
+        // Additional check to ensure objective has x and y properties
+        if (typeof objective.x !== 'number' || typeof objective.y !== 'number') {
+            console.warn('Objective has invalid coordinates:', objective);
+            return null;
+        }
+        
         const playerCenter = {
             x: this.player.x + this.player.width / 2,
             y: this.player.y + this.player.height / 2

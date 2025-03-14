@@ -275,6 +275,12 @@ class Player {
      * @private
      */
     _canMove(newX, newY, map) {
+        // Check if map is valid
+        if (!map || !map.tiles) {
+            // If no valid map, default to allowing movement
+            return true;
+        }
+        
         // Get collision bounds at the new position
         const bounds = {
             x: newX + this.collisionOffset.x,
@@ -299,7 +305,12 @@ class Player {
             }
         }
         
-        // Check map boundaries
+        // Check map boundaries (making sure map.width and map.height exist)
+        if (!map.width || !map.height) {
+            console.warn('Map dimensions missing in _canMove');
+            return true;
+        }
+        
         if (bounds.x < 0 || bounds.x + bounds.width > map.width || 
             bounds.y < 0 || bounds.y + bounds.height > map.height) {
             return false;
@@ -314,12 +325,23 @@ class Player {
      * @private
      */
     _adjustSpeedBasedOnTerrain(map) {
+        // Ensure map is valid
+        if (!map || !map.tiles) {
+            // If no valid map, use default speed
+            this.currentSpeed = this.speed;
+            return;
+        }
+        
         // Check terrain at the center of the player
         const centerX = this.x + this.width / 2;
         const centerY = this.y + this.height / 2;
         const terrain = MapGenerator.getTerrainAtPosition(map, centerX, centerY);
         
-        if (terrain === null) return;
+        if (terrain === null) {
+            // If terrain check failed, use default speed
+            this.currentSpeed = this.speed;
+            return;
+        }
         
         // Set speed multiplier based on terrain type
         switch (terrain) {

@@ -88,7 +88,8 @@ class MapGenerator {
             goalPos: goalPos,
             buildings: buildings,
             mines: mines,
-            missionType: missionType
+            missionType: missionType,
+            tileSize: this.tileSize
         };
     }
 
@@ -1338,18 +1339,42 @@ class MapGenerator {
     }
 
     /**
-     * Helper method to get terrain type at pixel coordinates
-     * @param {Object} map - The map object
-     * @param {number} x - X coordinate in pixels
-     * @param {number} y - Y coordinate in pixels
+     * Get the terrain type at a specific position
+     * @param {Object} map - Map data
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
      * @returns {number} Terrain type at the specified position
      */
     static getTerrainAtPosition(map, x, y) {
+        // Check if map is valid and has necessary properties
+        if (!map || !map.tileSize || !map.tiles || !Array.isArray(map.tiles) || map.tiles.length === 0) {
+            console.warn('Invalid map data in getTerrainAtPosition', map);
+            return null;
+        }
+        
+        // Handle NaN inputs which would cause the error
+        if (isNaN(x) || isNaN(y)) {
+            console.warn(`Invalid coordinates in getTerrainAtPosition: x=${x}, y=${y}`);
+            return null;
+        }
+        
         const tileX = Math.floor(x / map.tileSize);
         const tileY = Math.floor(y / map.tileSize);
         
+        // Check if map.tiles[0] exists
+        if (!map.tiles[0]) {
+            console.warn('Map tiles first row is undefined', map.tiles);
+            return null;
+        }
+        
         // Check bounds
         if (tileX < 0 || tileX >= map.tiles[0].length || tileY < 0 || tileY >= map.tiles.length) {
+            return null;
+        }
+        
+        // Final safety check before accessing the value
+        if (!map.tiles[tileY] || typeof map.tiles[tileY][tileX] === 'undefined') {
+            console.warn(`Tile at [${tileY}][${tileX}] is undefined or doesn't exist`);
             return null;
         }
         

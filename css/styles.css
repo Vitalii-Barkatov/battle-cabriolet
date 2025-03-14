@@ -63,25 +63,56 @@ body {
     object-position: top center;
 }
 
+/* Base game container styles (for desktop) */
 #game-container {
     position: relative;
-    width: auto;
-    height: auto;
+    width: 800px; /* Fixed width for desktop */
+    height: 544px; /* Fixed height for desktop */
     border: 4px solid #444;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    padding-top: 40px;
+    padding-top: 40px; /* Space for HUD */
     box-sizing: content-box;
     margin: 0 auto;
+    overflow: hidden;
+}
+
+/* Full-screen mobile mode */
+#game-container.mobile-fullscreen {
+    width: 100vw;
+    height: 100vh;
+    padding-top: 30px; /* Smaller HUD height for mobile */
+    border: none;
+    box-shadow: none;
+    box-sizing: border-box;
+    margin: 0;
+}
+
+/* Additional styles for fullscreen mode */
+#game-container.fullscreen-active {
+    width: 100vw !important;
+    height: 100vh !important;
+    padding-top: 30px !important;
+    border: none !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    background-color: #000;
 }
 
 canvas {
     position: absolute;
-    top: 40px;
+    top: 40px; /* Aligned with HUD height */
     left: 0;
     width: 100%;
     height: calc(100% - 40px);
     display: block;
     z-index: 1;
+}
+
+/* Adjust canvas positioning for mobile fullscreen */
+#game-container.mobile-fullscreen canvas {
+    top: 30px;
+    height: calc(100% - 30px);
 }
 
 .hidden {
@@ -278,7 +309,7 @@ button:hover {
     text-align: center;
 }
 
-/* HUD */
+/* HUD styles */
 #hud {
     position: absolute;
     top: 0;
@@ -293,6 +324,11 @@ button:hover {
     align-items: center;
     background-color: rgba(0, 0, 0, 0.7);
     border-bottom: 1px solid #444;
+}
+
+#game-container.mobile-fullscreen #hud {
+    height: 30px;
+    font-size: 14px;
 }
 
 #score {
@@ -545,7 +581,7 @@ button:hover {
     transition: opacity 0.5s;
 }
 
-/* Mobile touch controls */
+/* Mobile touch controls positioning */
 #mobile-controls {
     position: absolute;
     top: 40px;
@@ -555,6 +591,11 @@ button:hover {
     z-index: 10;
     pointer-events: none;
     display: none; /* Hidden by default, will be shown on mobile */
+}
+
+#game-container.mobile-fullscreen #mobile-controls {
+    top: 30px;
+    height: calc(100% - 30px);
 }
 
 #dpad-container {
@@ -648,7 +689,8 @@ button:hover {
 
 /* Media queries for responsive design */
 @media (max-width: 850px) {
-    #game-container {
+    /* Only apply these styles to non-mobile-fullscreen containers */
+    #game-container:not(.mobile-fullscreen) {
         width: 100%;
         max-width: 800px;
         height: auto;
@@ -677,6 +719,7 @@ button:hover {
     }
 }
 
+/* General landscape mobile styles */
 @media (orientation: landscape) and (max-width: 900px) {
     body {
         padding: 0;
@@ -686,29 +729,9 @@ button:hover {
         overflow: hidden;
     }
     
-    #game-container {
-        border-width: 0;
-        padding-top: 30px; /* Smaller HUD height for mobile */
-        margin: 0;
-    }
-    
-    canvas {
-        top: 30px;
-        height: calc(100% - 30px);
-    }
-    
-    #hud {
-        height: 30px;
-        font-size: 14px;
-    }
-    
-    #mobile-controls {
-        top: 30px;
-        height: calc(100% - 30px);
-    }
-    
+    /* Hide backgrounds in landscape mobile view */
     .left-background, .right-background, .top-background {
-        display: none; /* Hide background images in landscape mobile view */
+        display: none;
     }
     
     /* Smaller footer in landscape mode */
@@ -928,5 +951,167 @@ button:hover {
         width: 60px;
         height: 60px;
         font-size: 14px;
+    }
+}
+
+/* Rotation message for portrait mode */
+#rotation-message {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.rotation-content {
+    background-color: rgba(30, 30, 30, 0.9);
+    border: 3px solid #555;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 90%;
+}
+
+.rotate-icon {
+    font-size: 60px;
+    animation: rotate 2s infinite;
+    margin-bottom: 20px;
+    color: #ffcc00;
+}
+
+.rotation-content p {
+    font-size: 20px;
+    line-height: 1.4;
+    margin: 10px 0;
+}
+
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    25% { transform: rotate(90deg); }
+    50% { transform: rotate(90deg); }
+    75% { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@media (orientation: portrait) {
+    #game-container {
+        display: none;
+    }
+    
+    #rotation-message {
+        display: flex;
+    }
+}
+
+@media (orientation: landscape) {
+    #rotation-message {
+        display: none;
+    }
+}
+
+/* Fullscreen button */
+#fullscreen-button {
+    position: fixed;
+    z-index: 1000;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+#fullscreen-button:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+/* Hide fullscreen button on desktop */
+@media (min-width: 1025px) {
+    #fullscreen-button {
+        display: none;
+    }
+}
+
+/* Adjust canvas and HUD for fullscreen */
+#game-container.fullscreen-active canvas {
+    top: 30px;
+    height: calc(100% - 30px);
+}
+
+#game-container.fullscreen-active #hud {
+    height: 30px;
+    font-size: 14px;
+}
+
+/* Make sure mobile controls display properly in fullscreen */
+#game-container.fullscreen-active #mobile-controls {
+    display: block;
+    top: 30px;
+    height: calc(100% - 30px);
+}
+
+/* Hide background elements in fullscreen */
+#game-container.fullscreen-active ~ .left-background,
+#game-container.fullscreen-active ~ .right-background,
+#game-container.fullscreen-active ~ .top-background {
+    display: none;
+}
+
+/* Canvas display states */
+canvas.hidden-canvas {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease;
+}
+
+canvas.visible-canvas {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.5s ease;
+}
+
+/* Loading indicator for when canvas is hidden */
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    text-align: center;
+    color: #fff;
+    font-size: 18px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #ffcc00;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
     }
 } 

@@ -7,6 +7,12 @@ class Game {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
+        // Hide canvas initially
+        this.canvas.classList.add('hidden-canvas');
+        
+        // Create loading indicator
+        this._createLoadingIndicator();
+        
         // Define tile size (32x32 grid results in 25x17 tiles on desktop)
         this.tileSize = 32;
         
@@ -43,6 +49,10 @@ class Game {
         this.isRunning = false;
         this.keys = {}; // Keyboard state
         
+        // Fullscreen state
+        this.fullscreenButtonShown = false;
+        this.pausedForOrientation = false;
+        
         // Animation frame ID for cancellation
         this.animationFrameId = null;
         
@@ -68,22 +78,27 @@ class Game {
      * @private
      */
     _setupCanvasDimensions() {
+        // Check orientation
+        const isLandscape = window.innerWidth > window.innerHeight;
+        
+        // Show/hide rotation message based on orientation
+        this._handleOrientation(isLandscape);
+        
         if (this.isMobileDevice) {
-            // For mobile, calculate dimensions based on available screen space
-            const isLandscape = window.innerWidth > window.innerHeight;
-            
+            // For mobile, use viewport-filling dimensions when in landscape
             if (isLandscape) {
-                // Get available screen dimensions
                 // Account for HUD height (using a smaller HUD on mobile)
                 const hudHeight = window.innerHeight <= 400 ? 25 : 30;
+                
+                // Get available dimensions (full viewport minus HUD)
                 const availableWidth = window.innerWidth;
                 const availableHeight = window.innerHeight - hudHeight;
                 
-                // Calculate how many tiles can fit in the available space
+                // Calculate how many complete tiles can fit
                 const tilesX = Math.floor(availableWidth / this.tileSize);
                 const tilesY = Math.floor(availableHeight / this.tileSize);
                 
-                // Set canvas dimensions to be exactly the right size for the number of tiles
+                // Set dimensions to fill the available space exactly
                 this.width = tilesX * this.tileSize;
                 this.height = tilesY * this.tileSize;
                 
@@ -92,25 +107,16 @@ class Game {
                 this.tilesY = tilesY;
                 
                 console.log(`Mobile canvas dimensions: ${this.width}x${this.height} (${tilesX}x${tilesY} tiles)`);
+                
+                // Apply full-screen mobile class to the game container
+                document.getElementById('game-container').classList.add('mobile-fullscreen');
             } else {
-                // In portrait, prompt to rotate device but use a smaller grid
-                // This is a fallback for portrait mode
-                const availableWidth = window.innerWidth;
-                const availableHeight = window.innerHeight / 2; // Use half height for game
-                
-                // Calculate how many tiles can fit in the available space
-                const tilesX = Math.floor(availableWidth / this.tileSize);
-                const tilesY = Math.floor(availableHeight / this.tileSize);
-                
-                // Set canvas dimensions to be exactly the right size for the number of tiles
-                this.width = tilesX * this.tileSize;
-                this.height = tilesY * this.tileSize;
-                
-                // Store tile counts for map generation
-                this.tilesX = tilesX;
-                this.tilesY = tilesY;
-                
-                console.log(`Mobile portrait dimensions: ${this.width}x${this.height} (${tilesX}x${tilesY} tiles)`);
+                // In portrait, prepare dimensions for when rotated to landscape
+                // This is just to have reasonable default values when rotated
+                this.width = 800;
+                this.height = 544;
+                this.tilesX = 25;
+                this.tilesY = 17;
             }
         } else {
             // For desktop, use the original fixed dimensions
@@ -120,11 +126,71 @@ class Game {
             // Store tile counts for map generation
             this.tilesX = Math.floor(this.width / this.tileSize); // 25 tiles
             this.tilesY = Math.floor(this.height / this.tileSize); // 17 tiles
+            
+            // Ensure any mobile-specific classes are removed
+            document.getElementById('game-container').classList.remove('mobile-fullscreen');
         }
         
         // Set the actual canvas width and height
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+    }
+
+    /**
+     * Handle device orientation changes
+     * @param {boolean} isLandscape - Whether the device is in landscape mode
+     * @private 
+     */
+    _handleOrientation(isLandscape) {
+        const gameContainer = document.getElementById('game-container');
+        const rotationMessage = document.getElementById('rotation-message') || this._createRotationMessage();
+        
+        if (isLandscape) {
+            // Landscape mode - show game, hide rotation message
+            gameContainer.style.display = 'block';
+            rotationMessage.style.display = 'none';
+            
+            // Show fullscreen button for mobile
+            if (this.isMobileDevice && !this.fullscreenButtonShown) {
+                this._createFullscreenButton();
+                this.fullscreenButtonShown = true;
+            }
+            
+            // Resume game if it was paused due to orientation
+            if (this.pausedForOrientation && this.isRunning) {
+                this.pausedForOrientation = false;
+            }
+        } else {
+            // Portrait mode - hide game, show rotation message
+            gameContainer.style.display = 'none';
+            rotationMessage.style.display = 'flex';
+            
+            // Pause game while in wrong orientation
+            if (this.isRunning && !this.isGameOver) {
+                this.pausedForOrientation = true;
+            }
+        }
+    }
+    
+    /**
+     * Create rotation message element if it doesn't exist
+     * @returns {HTMLElement} The rotation message element
+     * @private
+     */
+    _createRotationMessage() {
+        const existingMessage = document.getElementById('rotation-message');
+        if (existingMessage) return existingMessage;
+        
+        const rotationMessage = document.createElement('div');
+        rotationMessage.id = 'rotation-message';
+        rotationMessage.innerHTML = `
+            <div class="rotation-content">
+                <div class="rotate-icon">⟳</div>
+                <p>Please rotate your device to landscape mode</p>
+            </div>
+        `;
+        document.body.appendChild(rotationMessage);
+        return rotationMessage;
     }
 
     /**
@@ -207,11 +273,34 @@ class Game {
         // Detect mobile devices and adjust game settings accordingly
         this._setupMobileDetection();
         
+        // Check initial orientation
+        const isLandscape = window.innerWidth > window.innerHeight;
+        this._handleOrientation(isLandscape);
+        
+        // Add fullscreen button for mobile if in landscape
+        if (this.isMobileDevice && isLandscape) {
+            this._createFullscreenButton();
+            this.fullscreenButtonShown = true;
+        }
+        
         // Add resize handler
-        window.addEventListener('resize', () => this.handleResize());
+        window.addEventListener('resize', () => {
+            this.handleResize();
+            
+            // Check orientation on resize
+            const isLandscape = window.innerWidth > window.innerHeight;
+            this._handleOrientation(isLandscape);
+        });
+        
         window.addEventListener('orientationchange', () => {
             // Delay to allow orientation change to complete
-            setTimeout(() => this.handleResize(), 300);
+            setTimeout(() => {
+                this.handleResize();
+                
+                // Check orientation after change
+                const isLandscape = window.innerWidth > window.innerHeight;
+                this._handleOrientation(isLandscape);
+            }, 300);
         });
         
         // Show a message that we're running without audio
@@ -337,6 +426,11 @@ class Game {
      * @private
      */
     _render() {
+        // Skip rendering if canvas is hidden
+        if (this.canvas.classList.contains('hidden-canvas')) {
+            return;
+        }
+        
         // Clear the canvas
         this.ctx.fillStyle = '#1a1a1a';
         this.ctx.fillRect(0, 0, this.width, this.height);
@@ -911,12 +1005,34 @@ class Game {
             
             // Show mobile controls if on mobile
             if (this.isMobileDevice) {
-                document.getElementById('mobile-controls').classList.remove('hidden');
+                // Make sure fullscreen button is shown
+                if (!this.fullscreenButtonShown) {
+                    this._createFullscreenButton();
+                    this.fullscreenButtonShown = true;
+                }
             }
+            
+            // Show canvas with a smooth transition
+            this._showCanvas();
             
             // Trigger game started event
             this.triggerEvent('gameStarted');
         });
+    }
+    
+    /**
+     * Show the canvas and remove loading indicator
+     * @private
+     */
+    _showCanvas() {
+        // Remove hidden class and add visible class
+        this.canvas.classList.remove('hidden-canvas');
+        this.canvas.classList.add('visible-canvas');
+        
+        // Remove loading indicator if it exists
+        if (this.loadingIndicator && this.loadingIndicator.parentNode) {
+            this.loadingIndicator.parentNode.removeChild(this.loadingIndicator);
+        }
     }
 
     /**
@@ -1018,6 +1134,9 @@ class Game {
         // Start a new mission (reusing the existing method)
         this._startNewMission();
         
+        // Ensure canvas is visible
+        this._showCanvas();
+        
         // Show revival message
         this.ui.showMessage(GameTexts.messages.revivalSuccess);
     }
@@ -1048,6 +1167,11 @@ class Game {
         if (!dpadUp || !dpadRight || !dpadDown || !dpadLeft || !rebButton) {
             console.warn('Mobile control elements not found');
             return;
+        }
+        
+        // Show mobile controls for mobile devices
+        if (this.isMobileDevice) {
+            mobileControls.style.display = 'block';
         }
         
         // Touch event handlers for D-pad with tap and hold functionality
@@ -1224,5 +1348,141 @@ class Game {
         this.eventListeners[event].forEach(callback => {
             callback(data);
         });
+    }
+
+    /**
+     * Create a fullscreen button for mobile
+     * @private
+     */
+    _createFullscreenButton() {
+        // Check if fullscreen is supported
+        if (!document.fullscreenEnabled && 
+            !document.webkitFullscreenEnabled && 
+            !document.mozFullScreenEnabled && 
+            !document.msFullscreenEnabled) {
+            console.log('Fullscreen not supported on this device');
+            return;
+        }
+        
+        // Create fullscreen button if it doesn't exist
+        let fullscreenButton = document.getElementById('fullscreen-button');
+        if (!fullscreenButton) {
+            fullscreenButton = document.createElement('button');
+            fullscreenButton.id = 'fullscreen-button';
+            fullscreenButton.innerHTML = '⛶'; // Fullscreen icon
+            fullscreenButton.setAttribute('aria-label', 'Enter Fullscreen');
+            document.body.appendChild(fullscreenButton);
+            
+            // Add click handler
+            fullscreenButton.addEventListener('click', () => {
+                this._toggleFullscreen();
+            });
+            
+            // Add fullscreen change event listeners
+            document.addEventListener('fullscreenchange', () => this._onFullscreenChange());
+            document.addEventListener('webkitfullscreenchange', () => this._onFullscreenChange());
+            document.addEventListener('mozfullscreenchange', () => this._onFullscreenChange());
+            document.addEventListener('MSFullscreenChange', () => this._onFullscreenChange());
+        }
+    }
+    
+    /**
+     * Toggle fullscreen mode
+     * @private
+     */
+    _toggleFullscreen() {
+        const gameContainer = document.getElementById('game-container');
+        
+        if (!document.fullscreenElement && 
+            !document.webkitFullscreenElement && 
+            !document.mozFullScreenElement && 
+            !document.msFullscreenElement) {
+            
+            // Enter fullscreen
+            if (gameContainer.requestFullscreen) {
+                gameContainer.requestFullscreen();
+            } else if (gameContainer.webkitRequestFullscreen) {
+                gameContainer.webkitRequestFullscreen();
+            } else if (gameContainer.mozRequestFullScreen) {
+                gameContainer.mozRequestFullScreen();
+            } else if (gameContainer.msRequestFullscreen) {
+                gameContainer.msRequestFullscreen();
+            }
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    
+    /**
+     * Handle fullscreen change events
+     * @private
+     */
+    _onFullscreenChange() {
+        const gameContainer = document.getElementById('game-container');
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        
+        if (document.fullscreenElement || 
+            document.webkitFullscreenElement || 
+            document.mozFullScreenElement || 
+            document.msFullscreenElement) {
+                
+            // We're in fullscreen mode
+            gameContainer.classList.add('fullscreen-active');
+            if (fullscreenButton) {
+                fullscreenButton.innerHTML = '⤢'; // Exit fullscreen icon
+                fullscreenButton.setAttribute('aria-label', 'Exit Fullscreen');
+            }
+            
+            // Ensure canvas is visible in fullscreen mode
+            if (this.canvas.classList.contains('hidden-canvas') && this.isRunning) {
+                this._showCanvas();
+            }
+            
+            // Handle the resize resulting from entering fullscreen
+            setTimeout(() => this.handleResize(), 100);
+        } else {
+            // We've exited fullscreen mode
+            gameContainer.classList.remove('fullscreen-active');
+            if (fullscreenButton) {
+                fullscreenButton.innerHTML = '⛶'; // Fullscreen icon
+                fullscreenButton.setAttribute('aria-label', 'Enter Fullscreen');
+            }
+            
+            // Handle the resize resulting from exiting fullscreen
+            setTimeout(() => this.handleResize(), 100);
+        }
+    }
+
+    /**
+     * Create loading indicator
+     * @private
+     */
+    _createLoadingIndicator() {
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'loading-indicator';
+        
+        const spinner = document.createElement('div');
+        spinner.className = 'loading-spinner';
+        loadingIndicator.appendChild(spinner);
+        
+        const text = document.createElement('div');
+        text.textContent = 'Loading game...';
+        loadingIndicator.appendChild(text);
+        
+        // Add to game container
+        const gameContainer = document.getElementById('game-container');
+        gameContainer.appendChild(loadingIndicator);
+        
+        // Store reference for later removal
+        this.loadingIndicator = loadingIndicator;
     }
 } 
