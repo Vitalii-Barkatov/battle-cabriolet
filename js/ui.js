@@ -93,10 +93,20 @@ class UI {
         this.donateButton.textContent = GameTexts.menu.donate;
         this.leaderboardButton.textContent = GameTexts.menu.leaderboard;
         
-        // Set introduction text
+        // Set introduction text - check if on mobile device
         const introTextElement = document.getElementById('intro-text');
         if (introTextElement) {
-            introTextElement.innerHTML = GameTexts.menu.introduction.replace(/\n/g, '<br>');
+            // Check if this is a mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                             window.innerWidth <= 900;
+            
+            if (isMobile) {
+                // For mobile, show a simplified version without keyboard controls
+                introTextElement.innerHTML = this._getMobileIntroText();
+            } else {
+                // For desktop, show the full introduction with keyboard controls
+                introTextElement.innerHTML = GameTexts.menu.introduction.replace(/\n/g, '<br>');
+            }
         }
         
         // Game over screen
@@ -204,6 +214,20 @@ class UI {
             leaderboardButton.textContent = GameTexts.leaderboard.viewLeaderboard;
             gameOverScreen.querySelector('.donation-section').insertAdjacentElement('afterend', leaderboardButton);
         }
+    }
+
+    /**
+     * Get a mobile-friendly version of the introduction text
+     * @returns {string} HTML for mobile introduction
+     * @private
+     */
+    _getMobileIntroText() {
+        return "<div class='instructions-table'>" +
+            "<div class='instruction-row'><div class='instruction-label'>Виконана місія</div><div class='instruction-value'>+10 очок</div></div>" +
+            "<div class='instruction-row'><div class='instruction-label'>Знищений дрон</div><div class='instruction-value'>+5 очок</div></div>" +
+            "</div>" +
+            "<div class='instructions-spacing'></div>" +
+            "<div class='instructions-warning'>Уникайте мін та ворожих дронів - одне влучення означає знищення!</div>";
     }
 
     /**
@@ -926,6 +950,15 @@ class UI {
             
             // Setup screen orientation warning if needed
             this._setupOrientationWarning();
+            
+            // Listen for orientation changes to update the introduction text
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => this._updateIntroTextForMobile(), 300);
+            });
+            
+            window.addEventListener('resize', () => {
+                this._updateIntroTextForMobile();
+            });
         }
     }
     
@@ -992,6 +1025,17 @@ class UI {
             // Check immediately and on resize
             checkOrientation();
             window.addEventListener('resize', checkOrientation);
+        }
+    }
+    
+    /**
+     * Update the introduction text for mobile devices
+     * @private
+     */
+    _updateIntroTextForMobile() {
+        const introTextElement = document.getElementById('intro-text');
+        if (introTextElement && document.body.classList.contains('mobile-device')) {
+            introTextElement.innerHTML = this._getMobileIntroText();
         }
     }
 } 
