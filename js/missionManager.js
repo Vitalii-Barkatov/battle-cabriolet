@@ -89,6 +89,12 @@ class MissionManager {
         if (this.currentMap.startPos) {
             this.player.x = this.currentMap.startPos.x;
             this.player.y = this.currentMap.startPos.y;
+            
+            // Store the starting position for potential revival
+            this.startingPosition = {
+                x: this.currentMap.startPos.x,
+                y: this.currentMap.startPos.y
+            };
         }
         
         return this.currentMap;
@@ -120,6 +126,10 @@ class MissionManager {
                 tileX: map.startPos.tileX,
                 tileY: map.startPos.tileY
             };
+            
+            // Always position the player at the start position (base)
+            this.player.x = map.startPos.x;
+            this.player.y = map.startPos.y;
         } else {
             console.warn('Map missing startPos');
         }

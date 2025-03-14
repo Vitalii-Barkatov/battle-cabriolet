@@ -11,28 +11,73 @@ class TouchControls {
         this.swipeThreshold = 50; // Minimum distance for swipe detection
         this.swipeTimeout = null;
         this.isSwipe = false;
+        this.activePointers = new Map(); // Track multiple touch points for multitouch
         
         // Initialize touch events
         this._initTouchEvents();
+        
+        // Handle iOS-specific touch behavior
+        this._handleIOSSpecifics();
     }
     
     /**
-     * Initialize touch events
+     * Initialize touch events for the game canvas
      * @private
      */
     _initTouchEvents() {
-        // Add swipe detection to canvas
-        this.canvas.addEventListener('touchstart', this._handleTouchStart.bind(this));
-        this.canvas.addEventListener('touchmove', this._handleTouchMove.bind(this));
-        this.canvas.addEventListener('touchend', this._handleTouchEnd.bind(this));
+        // Use passive: false for better performance on modern browsers
+        const options = { passive: false };
         
-        // Add tap detection to canvas for action
-        this.canvas.addEventListener('touchstart', this._handleTap.bind(this));
+        // Add touch event listeners with options
+        this.canvas.addEventListener('touchstart', this._handleTouchStart.bind(this), options);
+        this.canvas.addEventListener('touchmove', this._handleTouchMove.bind(this), options);
+        this.canvas.addEventListener('touchend', this._handleTouchEnd.bind(this), options);
+        this.canvas.addEventListener('touchcancel', this._handleTouchEnd.bind(this), options);
         
-        // Prevent default behavior for all touch events on canvas to avoid scrolling
-        this.canvas.addEventListener('touchstart', (e) => e.preventDefault());
-        this.canvas.addEventListener('touchmove', (e) => e.preventDefault());
-        this.canvas.addEventListener('touchend', (e) => e.preventDefault());
+        // Prevent default browser behaviors that might interfere with the game
+        document.addEventListener('gesturestart', this._preventDefault, options);
+        document.addEventListener('gesturechange', this._preventDefault, options);
+        document.addEventListener('gestureend', this._preventDefault, options);
+    }
+    
+    /**
+     * Handle iOS-specific touch behavior
+     * @private
+     */
+    _handleIOSSpecifics() {
+        // Check if this is an iOS device
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        
+        if (isIOS) {
+            // Prevent elastic scrolling/bouncing on iOS
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+            document.body.style.height = '100%';
+            document.body.style.overflow = 'hidden';
+            
+            // Add CSS variables for safe areas if not already present
+            if (!document.documentElement.style.getPropertyValue('--safe-area-inset-top')) {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    :root {
+                        --safe-area-inset-top: env(safe-area-inset-top, 0px);
+                        --safe-area-inset-right: env(safe-area-inset-right, 0px);
+                        --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+                        --safe-area-inset-left: env(safe-area-inset-left, 0px);
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+    }
+    
+    /**
+     * Prevent default browser behavior
+     * @param {Event} e - The event object
+     * @private
+     */
+    _preventDefault(e) {
+        e.preventDefault();
     }
     
     /**

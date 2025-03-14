@@ -11,7 +11,7 @@ class Drone {
         this.player = player;
         this.audioManager = audioManager;
         
-        this.speed = 2.81; // Base speed increased by 30% (from 2.16 to 2.81)
+        this.speed = 3.24; // Restore original faster speed (was 2.81)
         this.isDestroyed = false;
         this.destroyAnimation = 0;
         
@@ -130,25 +130,64 @@ class Drone {
             ctx.fillStyle = `rgba(255, 100, 0, ${1 - explosionProgress})`;
             ctx.fill();
         } else {
-            // Draw drone body
+            // Draw drone at its actual size without enlargement
+            const centerX = this.x + this.width / 2;
+            const centerY = this.y + this.height / 2;
+            
+            // Draw drone body with outline
             ctx.fillStyle = '#E74C3C'; // Red color for enemy drones
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.strokeStyle = '#FFFFFF'; // White outline
+            ctx.lineWidth = 2;
+            
+            // Draw the rectangle centered at the drone's position
+            ctx.fillRect(
+                centerX - this.width / 2, 
+                centerY - this.height / 2, 
+                this.width, 
+                this.height
+            );
+            ctx.strokeRect(
+                centerX - this.width / 2, 
+                centerY - this.height / 2, 
+                this.width, 
+                this.height
+            );
             
             // Draw propellers
             ctx.fillStyle = '#7F8C8D'; // Gray color for propellers
             const propellerSize = this.width / 4;
             
             // Top-left propeller
-            ctx.fillRect(this.x - propellerSize / 2, this.y - propellerSize / 2, propellerSize, propellerSize);
+            ctx.fillRect(
+                centerX - this.width / 2 - propellerSize / 2, 
+                centerY - this.height / 2 - propellerSize / 2, 
+                propellerSize, 
+                propellerSize
+            );
             
             // Top-right propeller
-            ctx.fillRect(this.x + this.width - propellerSize / 2, this.y - propellerSize / 2, propellerSize, propellerSize);
+            ctx.fillRect(
+                centerX + this.width / 2 - propellerSize / 2, 
+                centerY - this.height / 2 - propellerSize / 2, 
+                propellerSize, 
+                propellerSize
+            );
             
             // Bottom-left propeller
-            ctx.fillRect(this.x - propellerSize / 2, this.y + this.height - propellerSize / 2, propellerSize, propellerSize);
+            ctx.fillRect(
+                centerX - this.width / 2 - propellerSize / 2, 
+                centerY + this.height / 2 - propellerSize / 2, 
+                propellerSize, 
+                propellerSize
+            );
             
             // Bottom-right propeller
-            ctx.fillRect(this.x + this.width - propellerSize / 2, this.y + this.height - propellerSize / 2, propellerSize, propellerSize);
+            ctx.fillRect(
+                centerX + this.width / 2 - propellerSize / 2, 
+                centerY + this.height / 2 - propellerSize / 2, 
+                propellerSize, 
+                propellerSize
+            );
         }
     }
 
@@ -176,8 +215,14 @@ class Drone {
      * @returns {Drone} New drone instance
      */
     static createRandomDrone(map, player, audioManager) {
-        const droneSize = map.tileSize * 0.8;
+        // Use standard tile size for drones (no enlargement)
+        const droneSize = map.tileSize;
+        
+        // Get a random edge position
         const position = getRandomEdgePosition(map.width, map.height, map.tileSize);
+        
+        // Log the drone creation for debugging
+        console.log(`Creating drone at position: x=${position.x}, y=${position.y}, map dimensions: ${map.width}x${map.height}`);
         
         return new Drone(
             position.x, 
@@ -450,4 +495,59 @@ class DroneManager {
     getDroneCount() {
         return this.drones.length;
     }
+}
+
+/**
+ * Get a random position at the edge of the map
+ * @param {number} mapWidth - Map width in pixels
+ * @param {number} mapHeight - Map height in pixels
+ * @param {number} tileSize - Size of a tile in pixels
+ * @returns {Object} Position object with x and y coordinates
+ */
+function getRandomEdgePosition(mapWidth, mapHeight, tileSize) {
+    // Ensure we have valid map dimensions
+    if (!mapWidth || !mapHeight || mapWidth <= 0 || mapHeight <= 0) {
+        console.error("Invalid map dimensions:", mapWidth, mapHeight);
+        // Fallback to some reasonable values
+        mapWidth = 800;
+        mapHeight = 600;
+    }
+    
+    // Ensure we have a valid tile size
+    if (!tileSize || tileSize <= 0) {
+        console.error("Invalid tile size:", tileSize);
+        // Fallback to a reasonable value
+        tileSize = 32;
+    }
+    
+    // Ensure we're at least one tile away from the edge
+    const safetyMargin = tileSize;
+    
+    // Choose which edge to spawn on (0: top, 1: right, 2: bottom, 3: left)
+    const edge = Math.floor(Math.random() * 4);
+    
+    let x, y;
+    
+    switch (edge) {
+        case 0: // Top edge
+            x = safetyMargin + Math.random() * (mapWidth - 2 * safetyMargin);
+            y = safetyMargin;
+            break;
+        case 1: // Right edge
+            x = mapWidth - safetyMargin;
+            y = safetyMargin + Math.random() * (mapHeight - 2 * safetyMargin);
+            break;
+        case 2: // Bottom edge
+            x = safetyMargin + Math.random() * (mapWidth - 2 * safetyMargin);
+            y = mapHeight - safetyMargin;
+            break;
+        case 3: // Left edge
+            x = safetyMargin;
+            y = safetyMargin + Math.random() * (mapHeight - 2 * safetyMargin);
+            break;
+    }
+    
+    console.log(`Drone spawning at edge ${edge}: x=${x}, y=${y}`);
+    
+    return { x, y };
 } 

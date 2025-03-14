@@ -93,6 +93,31 @@ class UI {
         this.donateButton.textContent = GameTexts.menu.donate;
         this.leaderboardButton.textContent = GameTexts.menu.leaderboard;
         
+        // Add fullscreen button to menu for mobile devices
+        if (document.body.classList.contains('mobile-device') && !document.getElementById('menu-fullscreen-button')) {
+            const menuButtons = document.querySelector('.menu-buttons');
+            if (menuButtons) {
+                const fullscreenButton = document.createElement('button');
+                fullscreenButton.id = 'menu-fullscreen-button';
+                fullscreenButton.textContent = 'Повний екран';
+                fullscreenButton.addEventListener('click', () => {
+                    const gameContainer = document.getElementById('game-container');
+                    if (gameContainer) {
+                        if (gameContainer.requestFullscreen) {
+                            gameContainer.requestFullscreen();
+                        } else if (gameContainer.webkitRequestFullscreen) {
+                            gameContainer.webkitRequestFullscreen();
+                        } else if (gameContainer.msRequestFullscreen) {
+                            gameContainer.msRequestFullscreen();
+                        }
+                    }
+                });
+                
+                // Insert after leaderboard button
+                menuButtons.appendChild(fullscreenButton);
+            }
+        }
+        
         // Set introduction text - check if on mobile device
         const introTextElement = document.getElementById('intro-text');
         if (introTextElement) {
@@ -747,6 +772,9 @@ class UI {
         // Play menu music once
         this.audioManager.playMusic('menu');
         
+        // Check if this is a mobile device
+        const isMobile = document.body.classList.contains('mobile-device');
+        
         // Set up countdown
         let countdown = 5;
         const countdownElement = document.getElementById('countdown');
@@ -765,14 +793,126 @@ class UI {
             if (countdown <= 0) {
                 clearInterval(countdownInterval);
                 
-                // Switch to game screen and call callback
-                this.showScreen('game');
-                
-                if (typeof callback === 'function') {
-                    callback();
+                if (isMobile) {
+                    // On mobile, show fullscreen prompt instead of starting game immediately
+                    this._showFullscreenPrompt(callback);
+                } else {
+                    // On desktop, proceed as normal
+                    this.showScreen('game');
+                    
+                    if (typeof callback === 'function') {
+                        callback();
+                    }
                 }
             }
         }, 1000);
+    }
+    
+    /**
+     * Show fullscreen prompt for mobile users
+     * @param {function} callback - Function to call after user goes fullscreen
+     * @private
+     */
+    _showFullscreenPrompt(callback) {
+        // Create or get the mission preparation screen
+        const missionPrepScreen = document.getElementById('mission-preparation-screen');
+        
+        // Hide the mission info and countdown
+        const missionInfo = document.querySelector('.mission-info');
+        const countdownContainer = document.querySelector('.countdown-container');
+        
+        if (missionInfo) {
+            missionInfo.style.display = 'none';
+        }
+        
+        if (countdownContainer) {
+            countdownContainer.style.display = 'none';
+        }
+        
+        // Create fullscreen prompt if it doesn't exist
+        let fullscreenPrompt = document.getElementById('fullscreen-prompt');
+        if (!fullscreenPrompt) {
+            fullscreenPrompt = document.createElement('div');
+            fullscreenPrompt.id = 'fullscreen-prompt';
+            fullscreenPrompt.className = 'fullscreen-prompt';
+            
+            // Create prompt content
+            fullscreenPrompt.innerHTML = `
+                <div class="fullscreen-icon">⛶</div>
+                <p>Для кращого досвіду, перейдіть в повноекранний режим</p>
+                <button id="go-fullscreen-button" class="highlight-button">Повний екран</button>
+                <button id="skip-fullscreen-button">Пропустити</button>
+            `;
+            
+            // Add to mission preparation screen
+            missionPrepScreen.appendChild(fullscreenPrompt);
+        } else {
+            // Show the prompt if it already exists
+            fullscreenPrompt.style.display = 'flex';
+        }
+        
+        // Get the buttons
+        const goFullscreenButton = document.getElementById('go-fullscreen-button');
+        const skipFullscreenButton = document.getElementById('skip-fullscreen-button');
+        
+        // Add event listeners
+        const startGameAfterChoice = () => {
+            // Hide the prompt
+            fullscreenPrompt.style.display = 'none';
+            
+            // Show the game screen
+            this.showScreen('game');
+            
+            // Call the callback
+            if (typeof callback === 'function') {
+                callback();
+            }
+            
+            // Remove event listeners to prevent memory leaks
+            goFullscreenButton.removeEventListener('click', handleGoFullscreen);
+            skipFullscreenButton.removeEventListener('click', handleSkipFullscreen);
+            
+            // Reset mission info and countdown display for next time
+            if (missionInfo) {
+                missionInfo.style.display = 'block';
+            }
+            
+            if (countdownContainer) {
+                countdownContainer.style.display = 'block';
+            }
+        };
+        
+        const handleGoFullscreen = () => {
+            // Request fullscreen
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) {
+                if (gameContainer.requestFullscreen) {
+                    gameContainer.requestFullscreen();
+                } else if (gameContainer.webkitRequestFullscreen) {
+                    gameContainer.webkitRequestFullscreen();
+                } else if (gameContainer.msRequestFullscreen) {
+                    gameContainer.msRequestFullscreen();
+                }
+                
+                // Add fullscreen-active class
+                gameContainer.classList.add('fullscreen-active');
+            }
+            
+            // Start the game after a short delay to allow fullscreen transition
+            setTimeout(startGameAfterChoice, 500);
+        };
+        
+        const handleSkipFullscreen = () => {
+            // Show a brief message about fullscreen benefits
+            this.showMessage('Ви можете перейти в повноекранний режим через меню гри', 3000);
+            
+            // Start the game
+            startGameAfterChoice();
+        };
+        
+        // Add event listeners
+        goFullscreenButton.addEventListener('click', handleGoFullscreen);
+        skipFullscreenButton.addEventListener('click', handleSkipFullscreen);
     }
 
     /**
@@ -938,8 +1078,18 @@ class UI {
      * @private
      */
     _initMobileUI() {
-        // Check if this is a mobile device
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 600;
+        // Use the same detection logic as in Game class for consistency
+        const hasTouchScreen = ('ontouchstart' in window) || 
+                              (navigator.maxTouchPoints > 0) || 
+                              (navigator.msMaxTouchPoints > 0);
+        
+        const userAgentCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|Pixel|Galaxy|Xperia|Redmi|Huawei|OnePlus/i.test(navigator.userAgent);
+        
+        const isSmallScreen = window.innerWidth <= 1024;
+        
+        const hasMobileFeatures = 'orientation' in window || 'userAgentData' in navigator;
+        
+        const isMobile = userAgentCheck || (hasTouchScreen && (isSmallScreen || hasMobileFeatures));
         
         if (isMobile) {
             // Add class to body for mobile-specific CSS
@@ -959,6 +1109,12 @@ class UI {
             window.addEventListener('resize', () => {
                 this._updateIntroTextForMobile();
             });
+            
+            // Handle iOS safe areas
+            if ((/iPhone|iPad|iPod/i.test(navigator.userAgent) && /WebKit/i.test(navigator.userAgent)) || 
+                document.documentElement.style.getPropertyValue('--safe-area-inset-top')) {
+                document.body.classList.add('ios-device');
+            }
         }
     }
     

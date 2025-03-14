@@ -71,9 +71,10 @@ body {
     border: 4px solid #444;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     padding-top: 40px; /* Space for HUD */
-    box-sizing: content-box;
+    box-sizing: border-box; /* Changed from content-box to ensure consistent sizing */
     margin: 0 auto;
     overflow: hidden;
+    background-color: #000;
 }
 
 /* Full-screen mobile mode */
@@ -103,8 +104,8 @@ canvas {
     position: absolute;
     top: 40px; /* Aligned with HUD height */
     left: 0;
-    width: 100%;
-    height: calc(100% - 40px);
+    width: 800px; /* Fixed width matching container */
+    height: 504px; /* Fixed height (544px - 40px HUD) */
     display: block;
     z-index: 1;
 }
@@ -112,6 +113,7 @@ canvas {
 /* Adjust canvas positioning for mobile fullscreen */
 #game-container.mobile-fullscreen canvas {
     top: 30px;
+    width: 100%;
     height: calc(100% - 30px);
 }
 
@@ -367,35 +369,37 @@ button:hover {
 
 /* Mission Preparation Screen */
 .mission-info {
-    margin: 20px 0;
+    margin: 15px 0;
     padding: 15px;
     background-color: rgba(50, 50, 50, 0.7);
     border-radius: 5px;
     text-align: left;
+    max-height: 40vh; /* Limit height on small screens */
+    overflow-y: auto;
 }
 
 .mission-info h2 {
     color: #ffcc00;
-    margin-bottom: 10px;
-    font-size: 24px;
+    margin-bottom: 8px;
+    font-size: 20px;
 }
 
 .mission-info p {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.4;
 }
 
 .countdown-container {
-    margin: 30px auto 10px;
+    margin: 5px auto;
 }
 
 #countdown {
-    font-size: 72px;
+    font-size: 60px;
     font-weight: bold;
     color: #ffcc00;
     background-color: rgba(50, 50, 50, 0.7);
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
@@ -404,6 +408,44 @@ button:hover {
     border: 3px solid #ffcc00;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     transition: all 0.5s ease;
+}
+
+/* Adjust mission preparation screen for mobile */
+@media (max-width: 1024px) {
+    #mission-preparation-screen {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    #mission-preparation-screen h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    
+    .mission-info {
+        margin: 10px 0;
+        padding: 12px;
+        max-height: 35vh;
+    }
+    
+    .mission-info h2 {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+    
+    .mission-info p {
+        font-size: 14px;
+        line-height: 1.3;
+    }
+    
+    #countdown {
+        width: 80px;
+        height: 80px;
+        font-size: 48px;
+    }
 }
 
 /* Footer styling */
@@ -687,40 +729,70 @@ button:hover {
     border-color: rgba(200, 200, 200, 0.6);
 }
 
-/* Media queries for responsive design */
-@media (max-width: 850px) {
-    /* Only apply these styles to non-mobile-fullscreen containers */
+/* Media queries for responsive design - updated for modern devices */
+@media (max-width: 1024px) {
+    /* Apply to all mobile and tablet devices */
     #game-container:not(.mobile-fullscreen) {
         width: 100%;
         max-width: 800px;
-        height: auto;
-        aspect-ratio: 800/600;
+        height: 544px; /* Maintain fixed height even on smaller screens */
+        max-height: 544px; /* Ensure maximum height is respected */
+        box-sizing: border-box;
     }
     
-    .left-background, .right-background {
-        max-width: 200px;
-    }
-    
-    .top-background {
-        max-height: 150px;
-    }
-    
-    button {
-        padding: 8px 16px;
-        font-size: 14px;
-    }
-    
-    h1 {
-        font-size: 28px;
+    /* Mobile UI styles - more native-looking */
+    #ui-overlay {
+        padding: 0;
+        background-color: rgba(0, 0, 0, 0.85);
     }
     
     .ui-screen {
-        padding: 15px;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        background-color: transparent;
+        border: none;
+        border-radius: 0;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
     }
+    
+    /* Adjust for notches and dynamic islands on newer iPhones */
+    @supports (padding-top: env(safe-area-inset-top)) {
+        #ui-overlay {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+        
+        #game-container.mobile-fullscreen {
+            padding-top: calc(30px + env(safe-area-inset-top));
+        }
+        
+        #game-container.mobile-fullscreen canvas {
+            height: calc(100% - 30px - env(safe-area-inset-top));
+        }
+        
+        .footer-container {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+    
+    /* Main menu screen improvements */
+    #menu-screen {
+        background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(20,20,20,0.9) 100%);
+    }
+    
+    /* Rest of mobile styles... */
 }
 
-/* General landscape mobile styles */
-@media (orientation: landscape) and (max-width: 900px) {
+/* General landscape mobile styles - updated for modern devices */
+@media (orientation: landscape) and (max-width: 1024px) {
     body {
         padding: 0;
         margin: 0;
@@ -743,215 +815,166 @@ button:hover {
         font-size: 14px;
         padding: 3px 10px;
     }
-}
-
-@media (max-width: 600px) {
-    body {
-        padding: 5px 0;
+    
+    /* Optimize menu layout for landscape orientation */
+    #menu-screen {
+        padding: 15px 20px;
+        justify-content: flex-start;
     }
     
-    #game-container {
-        border-width: 2px;
-        padding-top: 30px;
-    }
-    
-    .left-background, .right-background {
-        max-width: 120px;
-    }
-    
-    .top-background {
-        max-height: 100px;
+    /* Adjust for notches in landscape */
+    @supports (padding-left: env(safe-area-inset-left)) {
+        #menu-screen, 
+        #game-over-screen,
+        #mission-preparation-screen,
+        #leaderboard-screen,
+        #submit-score-screen,
+        #donation-screen {
+            padding-left: calc(15px + env(safe-area-inset-left));
+            padding-right: calc(15px + env(safe-area-inset-right));
     }
     
     #mobile-controls {
-        display: block;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+        
+        #dpad-container {
+            left: calc(5% + env(safe-area-inset-left));
+        }
+        
+        #reb-button {
+            right: calc(5% + env(safe-area-inset-right));
+        }
     }
     
-    h1 {
-        font-size: 22px;
-        margin-bottom: 10px;
-    }
-    
-    .menu-buttons {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 10px;
-    }
-    
-    button {
-        margin: 4px;
-        padding: 8px 15px;
-        width: 80%;
-        max-width: 250px;
-    }
-    
-    .ui-screen {
-        width: 90%;
-        padding: 10px;
-        margin: 0 auto;
-    }
-    
-    #ui-overlay {
-        padding: 10px 0;
-    }
-    
-    #leaderboard-table th, 
-    #leaderboard-table td {
-        padding: 4px;
-        font-size: 13px;
-    }
-    
-    .introduction {
-        font-size: 14px;
-        margin-bottom: 10px;
-        line-height: 1.3;
-        padding: 5px;
-    }
-    
-    .donation-section {
-        margin: 10px 0;
-        padding: 10px;
-    }
-    
-    .donation-section p {
-        font-size: 13px;
-        margin-bottom: 8px;
-    }
-    
-    .qr-placeholder {
-        width: 100px;
-        height: 100px;
-        margin: 10px auto;
-    }
-    
-    .instructions-table {
-        font-size: 13px;
-        width: 95%;
-    }
-    
-    .instruction-label, .instruction-value {
-        padding: 3px 6px;
-    }
-    
-    .instructions-spacing {
-        height: 8px;
-    }
-    
-    .instructions-warning {
-        margin-top: 3px;
-        padding: 3px;
-        font-size: 13px;
-    }
-    
-    .best-score-container {
-        margin-top: 8px;
-        font-size: 14px;
-    }
-    
-    .ui-screen > * {
-        margin-bottom: 8px;
-    }
-    
-    #hud {
-        height: 30px;
-        padding: 3px 8px;
-        font-size: 14px;
-    }
-    
-    canvas {
-        top: 30px;
-        height: calc(100% - 30px);
-    }
+    /* Rest of landscape styles... */
 }
 
-@media (max-width: 400px) {
-    h1 {
+/* Specific adjustments for larger phones (iPhone Pro Max, Pixel Pro XL, etc.) */
+@media (min-width: 428px) and (max-width: 926px) and (orientation: portrait),
+       (min-height: 428px) and (max-height: 926px) and (orientation: landscape) {
+    #game-title {
+        font-size: 40px;
+    }
+    
+    .menu-buttons button {
         font-size: 18px;
-        margin-bottom: 8px;
+        padding: 16px 24px;
     }
     
-    .left-background, .right-background {
-        max-width: 80px;
+    #countdown {
+        width: 130px;
+        height: 130px;
+        font-size: 80px;
     }
     
-    .top-background {
-        max-height: 80px;
-    }
-    
-    .ui-screen {
-        padding: 8px;
-        width: 95%;
-    }
-    
-    button {
-        font-size: 14px;
-        padding: 6px 12px;
-    }
-    
-    .introduction {
-        font-size: 13px;
-        padding: 3px;
-    }
-    
-    .instructions-table {
-        font-size: 12px;
-    }
-    
-    .donation-section {
-        padding: 8px;
-    }
-    
-    .qr-placeholder {
-        width: 90px;
-        height: 90px;
-    }
-    
-    .donation-links {
-        gap: 8px;
-        margin: 8px 0;
-    }
-    
-    .donation-link {
-        padding: 6px 10px;
-        min-width: 80px;
-        font-size: 13px;
-    }
-    
-    /* Restore mobile controls styling */
+    /* Larger touch controls for bigger screens */
     #dpad-container {
-        width: 120px;
-        height: 120px;
+        width: 180px;
+        height: 180px;
     }
     
     .dpad-button {
-        width: 40px;
-        height: 40px;
+        width: 60px;
+        height: 60px;
+        font-size: 28px;
     }
     
     #dpad-up {
-        left: 40px;
+        left: 60px;
     }
     
     #dpad-right {
-        left: 80px;
-        top: 40px;
+        left: 120px;
+        top: 60px;
     }
     
     #dpad-down {
-        left: 40px;
-        top: 80px;
+        left: 60px;
+        top: 120px;
     }
     
     #dpad-left {
-        top: 40px;
+        top: 60px;
     }
     
     #reb-button {
-        width: 60px;
-        height: 60px;
-        font-size: 14px;
+        width: 100px;
+        height: 100px;
+        font-size: 22px;
     }
+}
+
+/* High refresh rate screens (120Hz) - reduce animations for smoother experience */
+@media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: scroll()) {
+        .dpad-button, #reb-button {
+            transition-duration: 0.08s;
+        }
+        
+        #reb-cooldown-fill {
+            transition-duration: 0.2s;
+        }
+        
+        .game-message {
+            transition-duration: 0.3s;
+        }
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    /* Game already has dark theme, but ensure consistent colors */
+    .ui-screen {
+        background-color: rgba(20, 20, 20, 0.9);
+    }
+    
+    button {
+        background-color: #333;
+    }
+    
+    input[type="text"] {
+        background-color: #222;
+    }
+}
+
+/* Ensure proper touch target sizes for all mobile devices */
+@media (hover: none) and (pointer: coarse) {
+    button, 
+    .donation-link,
+    #fullscreen-button {
+        min-height: 44px; /* Apple's recommended minimum */
+        min-width: 44px;
+    }
+    
+    input[type="text"] {
+        min-height: 44px;
+    }
+    
+    /* Increase spacing between interactive elements */
+    .menu-buttons button {
+        margin: 10px 0;
+    }
+}
+
+/* Ensure mobile controls are properly sized and positioned */
+#mobile-controls {
+    position: absolute;
+        top: 40px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    z-index: 10;
+    pointer-events: none;
+    display: none; /* Hidden by default, will be shown on mobile */
+    touch-action: none; /* Prevent browser handling of touch events */
+}
+
+/* Improve touch controls responsiveness */
+.dpad-button, #reb-button {
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+    touch-action: manipulation; /* Optimize for touch */
 }
 
 /* Rotation message for portrait mode */
@@ -1015,7 +1038,7 @@ button:hover {
     }
 }
 
-/* Fullscreen button */
+/* Fullscreen button - only used on desktop */
 #fullscreen-button {
     position: fixed;
     z-index: 1000;
@@ -1024,28 +1047,23 @@ button:hover {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     color: white;
     font-size: 24px;
-    display: flex;
+    display: none; /* Hidden by default, only shown on desktop when needed */
     justify-content: center;
     align-items: center;
     cursor: pointer;
     border: 2px solid rgba(255, 255, 255, 0.5);
     transition: all 0.2s ease;
     padding: 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 #fullscreen-button:hover {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.9);
     transform: scale(1.1);
-}
-
-/* Hide fullscreen button on desktop */
-@media (min-width: 1025px) {
-    #fullscreen-button {
-        display: none;
-    }
+    border-color: #ffcc00;
 }
 
 /* Adjust canvas and HUD for fullscreen */
@@ -1114,4 +1132,73 @@ canvas.visible-canvas {
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Fullscreen prompt styling */
+.fullscreen-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: rgba(40, 40, 40, 0.9);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 10px auto;
+    width: 90%;
+    max-width: 450px;
+    animation: fade-in 0.5s ease-out;
+}
+
+.fullscreen-icon {
+    font-size: 40px;
+    color: #ffcc00;
+    margin-bottom: 10px;
+    animation: pulse 2s infinite;
+}
+
+.fullscreen-prompt p {
+    font-size: 16px;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+#go-fullscreen-button {
+    background: linear-gradient(to bottom, rgba(76,175,80,0.8) 0%, rgba(56,142,60,0.8) 100%);
+    border: 2px solid rgba(76,175,80,0.6);
+    margin-bottom: 10px;
+    font-size: 16px;
+    padding: 12px 20px;
+    min-width: 180px;
+}
+
+#skip-fullscreen-button {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    padding: 8px 15px;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Menu fullscreen button */
+#menu-fullscreen-button {
+    background: linear-gradient(to bottom, rgba(33,150,243,0.8) 0%, rgba(13,71,161,0.8) 100%);
+    border: 2px solid rgba(33,150,243,0.6);
+}
+
+#menu-fullscreen-button:hover,
+#menu-fullscreen-button:active {
+    background: linear-gradient(to bottom, rgba(33,150,243,0.9) 0%, rgba(13,71,161,0.9) 100%);
 } 

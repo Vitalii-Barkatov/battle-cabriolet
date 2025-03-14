@@ -11,11 +11,12 @@ class Player {
         this.audioManager = audioManager;
         
         // Movement
-        this.speed = 2.1; // Base speed reduced by 30% (from 3 to 2.1)
+        this.speed = 3.0; // Restore original speed (was reduced to 2.1)
         this.currentSpeed = this.speed;
         this.isMoving = false;
         this.direction = { x: 0, y: 0 };
         this.orientation = 0; // 0 = up, 1 = right, 2 = down, 3 = left (clockwise rotation)
+        this.lastPressedKey = null; // Track the last pressed key for movement
         
         // EW (Electronic Warfare)
         this.ewActive = false;
@@ -65,32 +66,58 @@ class Player {
         // Reset movement flag
         this.isMoving = false;
         
-        // Handle arrow key input
-        if (keys['ArrowUp']) {
-            this.direction.y = -1;
-            this.orientation = 0;
-            this.isMoving = true;
-        } else if (keys['ArrowDown']) {
-            this.direction.y = 1;
-            this.orientation = 2;
-            this.isMoving = true;
+        // Update last pressed key
+        if (keys['ArrowUp'] && this.lastPressedKey !== 'ArrowUp') {
+            this.lastPressedKey = 'ArrowUp';
+        }
+        if (keys['ArrowDown'] && this.lastPressedKey !== 'ArrowDown') {
+            this.lastPressedKey = 'ArrowDown';
+        }
+        if (keys['ArrowLeft'] && this.lastPressedKey !== 'ArrowLeft') {
+            this.lastPressedKey = 'ArrowLeft';
+        }
+        if (keys['ArrowRight'] && this.lastPressedKey !== 'ArrowRight') {
+            this.lastPressedKey = 'ArrowRight';
         }
         
-        if (keys['ArrowLeft']) {
-            this.direction.x = -1;
-            this.orientation = 3;
-            this.isMoving = true;
-        } else if (keys['ArrowRight']) {
-            this.direction.x = 1;
-            this.orientation = 1;
-            this.isMoving = true;
+        // Reset last pressed key if it's no longer being pressed
+        if (this.lastPressedKey && !keys[this.lastPressedKey]) {
+            this.lastPressedKey = null;
         }
         
-        // For mobile: normalize diagonal movement to avoid faster diagonal speed
-        if (this.direction.x !== 0 && this.direction.y !== 0) {
-            const length = Math.sqrt(this.direction.x * this.direction.x + this.direction.y * this.direction.y);
-            this.direction.x /= length;
-            this.direction.y /= length;
+        // Handle arrow key input based on last pressed key
+        // If any key is pressed, use the last pressed key for movement
+        if (keys['ArrowUp'] || keys['ArrowDown'] || keys['ArrowLeft'] || keys['ArrowRight']) {
+            const activeKey = this.lastPressedKey || 
+                        (keys['ArrowUp'] ? 'ArrowUp' : 
+                        (keys['ArrowDown'] ? 'ArrowDown' : 
+                        (keys['ArrowLeft'] ? 'ArrowLeft' : 'ArrowRight')));
+            
+            // Set direction based on active key (no diagonals)
+            switch (activeKey) {
+                case 'ArrowUp':
+                    this.direction.y = -1;
+                    this.direction.x = 0;
+                    this.orientation = 0;
+                    break;
+                case 'ArrowDown':
+                    this.direction.y = 1;
+                    this.direction.x = 0;
+                    this.orientation = 2;
+                    break;
+                case 'ArrowLeft':
+                    this.direction.x = -1;
+                    this.direction.y = 0;
+                    this.orientation = 3;
+                    break;
+                case 'ArrowRight':
+                    this.direction.x = 1;
+                    this.direction.y = 0;
+                    this.orientation = 1;
+                    break;
+            }
+            
+            this.isMoving = true;
         }
         
         // Adjust speed based on terrain
@@ -320,7 +347,7 @@ class Player {
     }
 
     /**
-     * Adjust movement speed based on terrain type
+     * Adjust player speed based on terrain
      * @param {Object} map - Current map data
      * @private
      */
@@ -346,13 +373,13 @@ class Player {
         // Set speed multiplier based on terrain type
         switch (terrain) {
             case this.terrainTypes.ASPHALT:
-                this.currentSpeed = this.speed * 1.1; // 10% speed boost on asphalt
+                this.currentSpeed = this.speed * 1.2; // 20% speed boost on asphalt (increased from 10%)
                 break;
             case this.terrainTypes.DIRT:
-                this.currentSpeed = this.speed * 0.7; // 70% speed on dirt
+                this.currentSpeed = this.speed * 0.8; // 80% speed on dirt (increased from 70%)
                 break;
             case this.terrainTypes.WATER:
-                this.currentSpeed = this.speed * 0.4; // 40% speed on water
+                this.currentSpeed = this.speed * 0.5; // 50% speed on water (increased from 40%)
                 break;
             default:
                 this.currentSpeed = this.speed;

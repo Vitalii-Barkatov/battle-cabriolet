@@ -71,9 +71,40 @@ function resizeGameForMobile(game) {
     // Update the mobile controls position to match the new canvas
     const mobileControls = document.getElementById('mobile-controls');
     if (mobileControls) {
-        const hudHeight = window.innerHeight <= 400 ? 25 : 30;
+        // Determine HUD height based on screen size and device
+        let hudHeight = window.innerHeight <= 400 ? 25 : 30;
+        
+        // Account for iOS notches and safe areas
+        if (document.body.classList.contains('ios-device')) {
+            const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-area-inset-top') || '0');
+            if (safeAreaTop > 0) {
+                hudHeight += safeAreaTop;
+            }
+        }
+        
+        // Apply the calculated height
         mobileControls.style.top = `${hudHeight}px`;
         mobileControls.style.height = `calc(100% - ${hudHeight}px)`;
+        
+        // Adjust D-pad and REB button positions for different screen sizes
+        const dpadContainer = document.getElementById('dpad-container');
+        const rebButton = document.getElementById('reb-button');
+        
+        if (dpadContainer && rebButton) {
+            // For larger phones (Pro/Max/XL models), increase size and adjust position
+            if (window.innerWidth >= 428 || window.innerHeight >= 926) {
+                dpadContainer.style.width = '180px';
+                dpadContainer.style.height = '180px';
+                rebButton.style.width = '100px';
+                rebButton.style.height = '100px';
+            } else {
+                // Reset to default sizes for smaller phones
+                dpadContainer.style.width = '150px';
+                dpadContainer.style.height = '150px';
+                rebButton.style.width = '80px';
+                rebButton.style.height = '80px';
+            }
+        }
     }
 }
 

@@ -69,8 +69,23 @@ class Game {
      * @private
      */
     _detectMobileDevice() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-               window.innerWidth <= 900;
+        // More comprehensive mobile detection
+        // 1. Check user agent for common mobile platforms
+        const userAgentCheck = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Windows Phone|Pixel|Galaxy|Xperia|Redmi|Huawei|OnePlus/i.test(navigator.userAgent);
+        
+        // 2. Check for touch capability
+        const hasTouchScreen = ('ontouchstart' in window) || 
+                              (navigator.maxTouchPoints > 0) || 
+                              (navigator.msMaxTouchPoints > 0);
+        
+        // 3. Check screen size (increased to 1024px to catch tablets and larger phones)
+        const isSmallScreen = window.innerWidth <= 1024;
+        
+        // 4. Check for mobile-specific features
+        const hasMobileFeatures = 'orientation' in window || 'userAgentData' in navigator;
+        
+        // Consider it mobile if user agent matches OR (has touch AND (small screen OR mobile features))
+        return userAgentCheck || (hasTouchScreen && (isSmallScreen || hasMobileFeatures));
     }
 
     /**
@@ -257,6 +272,11 @@ class Game {
         window.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
             
+            // Update player's last pressed key if it's an arrow key
+            if (this.player && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                this.player.lastPressedKey = e.key;
+            }
+            
             // Prevent scrolling when using arrow keys and prevent default behavior for Space and Enter keys
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter'].includes(e.key)) {
                 e.preventDefault();
@@ -265,6 +285,11 @@ class Game {
         
         window.addEventListener('keyup', (e) => {
             this.keys[e.key] = false;
+            
+            // Reset player's lastPressedKey if it matches the released key
+            if (this.player && this.player.lastPressedKey === e.key) {
+                this.player.lastPressedKey = null;
+            }
         });
         
         // Set up mobile touch controls
@@ -317,8 +342,15 @@ class Game {
      */
     _gameLoop(timestamp) {
         // Calculate delta time in milliseconds
-        const deltaTime = timestamp - this.lastFrameTime;
+        let deltaTime = timestamp - this.lastFrameTime;
         this.lastFrameTime = timestamp;
+        
+        // Cap delta time to prevent huge jumps if browser tab was inactive
+        // or if the game is running on a slower device
+        const MAX_DELTA_TIME = 50; // 50ms = 20fps minimum
+        if (deltaTime > MAX_DELTA_TIME) {
+            deltaTime = MAX_DELTA_TIME;
+        }
         
         // Check UI state for game actions
         this._checkUIActions();
@@ -1183,6 +1215,12 @@ class Game {
                 if (!isPressed) {
                     isPressed = true;
                     this.keys[direction] = true;
+                    
+                    // Update the player's last pressed key for consistent handling between keyboard and touch
+                    if (this.player) {
+                        this.player.lastPressedKey = direction;
+                    }
+                    
                     element.classList.add('active');
                 }
             };
@@ -1192,6 +1230,12 @@ class Game {
                 if (isPressed) {
                     isPressed = false;
                     this.keys[direction] = false;
+                    
+                    // Reset player's lastPressedKey if it matches this direction
+                    if (this.player && this.player.lastPressedKey === direction) {
+                        this.player.lastPressedKey = null;
+                    }
+                    
                     element.classList.remove('active');
                 }
             };
@@ -1278,8 +1322,8 @@ class Game {
      * @private
      */
     _setupMobileDetection() {
-        // Simple mobile detection
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 600;
+        // Use the improved mobile detection method
+        const isMobile = this._detectMobileDevice();
         
         // If mobile, show mobile controls
         if (isMobile) {
@@ -1302,6 +1346,27 @@ class Game {
             // Adjust player speed for touch controls (slightly slower for better control)
             if (this.player) {
                 this.player.speed *= 0.9;
+            }
+            
+            // Add viewport meta tag for proper scaling if not already present
+            if (!document.querySelector('meta[name="viewport"]')) {
+                const viewportMeta = document.createElement('meta');
+                viewportMeta.name = 'viewport';
+                viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+                document.head.appendChild(viewportMeta);
+            }
+            
+            // Add iOS specific meta tags for fullscreen web app
+            if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
+                const appleMeta = document.createElement('meta');
+                appleMeta.name = 'apple-mobile-web-app-capable';
+                appleMeta.content = 'yes';
+                document.head.appendChild(appleMeta);
+                
+                const appleStatusBarMeta = document.createElement('meta');
+                appleStatusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+                appleStatusBarMeta.content = 'black-translucent';
+                document.head.appendChild(appleStatusBarMeta);
             }
             
             // Show mobile controls usage message at first game start
@@ -1351,38 +1416,41 @@ class Game {
     }
 
     /**
-     * Create a fullscreen button for mobile
+     * Create fullscreen button for mobile devices
      * @private
      */
     _createFullscreenButton() {
-        // Check if fullscreen is supported
-        if (!document.fullscreenEnabled && 
-            !document.webkitFullscreenEnabled && 
-            !document.mozFullScreenEnabled && 
-            !document.msFullscreenEnabled) {
-            console.log('Fullscreen not supported on this device');
-            return;
+        // Check if button already exists
+        let fullscreenButton = document.getElementById('fullscreen-button');
+        
+        // Remove existing button if it exists
+        if (fullscreenButton) {
+            fullscreenButton.remove();
         }
         
-        // Create fullscreen button if it doesn't exist
-        let fullscreenButton = document.getElementById('fullscreen-button');
-        if (!fullscreenButton) {
+        // Only create the button for desktop or if explicitly requested
+        // We don't need it on mobile since we have the fullscreen prompt after countdown
+        if (!this.isMobileDevice) {
+            // Create button element
             fullscreenButton = document.createElement('button');
             fullscreenButton.id = 'fullscreen-button';
-            fullscreenButton.innerHTML = '⛶'; // Fullscreen icon
-            fullscreenButton.setAttribute('aria-label', 'Enter Fullscreen');
+            fullscreenButton.innerHTML = '⛶'; // Unicode fullscreen icon
+            fullscreenButton.setAttribute('aria-label', 'Toggle fullscreen');
+            fullscreenButton.setAttribute('title', 'Toggle fullscreen');
+            
+            // Add to document
             document.body.appendChild(fullscreenButton);
             
-            // Add click handler
+            // Add click event listener
             fullscreenButton.addEventListener('click', () => {
                 this._toggleFullscreen();
             });
             
-            // Add fullscreen change event listeners
-            document.addEventListener('fullscreenchange', () => this._onFullscreenChange());
-            document.addEventListener('webkitfullscreenchange', () => this._onFullscreenChange());
-            document.addEventListener('mozfullscreenchange', () => this._onFullscreenChange());
-            document.addEventListener('MSFullscreenChange', () => this._onFullscreenChange());
+            // Add fullscreen change event listener to update button state
+            document.addEventListener('fullscreenchange', this._onFullscreenChange.bind(this));
+            document.addEventListener('webkitfullscreenchange', this._onFullscreenChange.bind(this));
+            document.addEventListener('mozfullscreenchange', this._onFullscreenChange.bind(this));
+            document.addEventListener('MSFullscreenChange', this._onFullscreenChange.bind(this));
         }
     }
     
