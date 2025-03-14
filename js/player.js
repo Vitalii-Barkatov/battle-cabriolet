@@ -230,15 +230,27 @@ class Player {
     }
 
     /**
-     * Reset the player position
-     * @param {number} x - New X coordinate
-     * @param {number} y - New Y coordinate
+     * Reset player position
+     * @param {number} x - New x coordinate
+     * @param {number} y - New y coordinate
      */
     resetPosition(x, y) {
         this.x = x;
         this.y = y;
-        this.hasCargo = false;
-        this.hasRescue = false;
+        this.direction = { x: 0, y: 0 };
+        this.isMoving = false;
+    }
+    
+    /**
+     * Reset player position to center of canvas
+     * @param {number} canvasWidth - Canvas width
+     * @param {number} canvasHeight - Canvas height
+     */
+    resetToCenter(canvasWidth, canvasHeight) {
+        this.resetPosition(
+            Math.floor(canvasWidth / 2),
+            Math.floor(canvasHeight / 2)
+        );
     }
 
     /**

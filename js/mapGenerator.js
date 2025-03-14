@@ -20,10 +20,28 @@ class MapGenerator {
 
     /**
      * Generate a new random map
-     * @param {string} missionType - Type of mission ('evacuation' or 'delivery')
+     * @param {string|number} missionTypeOrTilesX - Either the mission type ('evacuation' or 'delivery') or the number of tiles in the X dimension
+     * @param {number} [tilesY] - The number of tiles in the Y dimension (if providing custom dimensions)
      * @returns {Object} Map data including tiles, start, and goal positions
      */
-    generateMap(missionType) {
+    generateMap(missionTypeOrTilesX, tilesY) {
+        let missionType;
+        
+        // Check if we're providing custom dimensions
+        if (typeof missionTypeOrTilesX === 'number' && tilesY) {
+            // Update dimensions for this map generation
+            this.tilesX = missionTypeOrTilesX;
+            this.tilesY = tilesY;
+            this.width = this.tilesX * this.tileSize;
+            this.height = this.tilesY * this.tileSize;
+            
+            // Default to a random mission type
+            missionType = Math.random() < 0.5 ? 'evacuation' : 'delivery';
+        } else {
+            // Use the provided mission type
+            missionType = missionTypeOrTilesX || 'delivery';
+        }
+        
         // Initialize map with all dirt (now the default terrain)
         const tiles = Array(this.tilesY).fill().map(() => 
             Array(this.tilesX).fill(this.terrainTypes.DIRT)
@@ -48,26 +66,29 @@ class MapGenerator {
         this._clearArea(tiles, startPos.tileX, startPos.tileY, 2);
         
         // Determine goal position based on mission type
-        const goalPos = this._generateGoalPosition(tiles, startPos, missionType);
+        let goalPos;
         
-        // Clear the area around the goal position
-        this._clearArea(tiles, goalPos.tileX, goalPos.tileY, 2);
+        if (missionType === 'evacuation') {
+            // For evacuation, we need to place civilians
+            goalPos = this._generateEvacuationObjectives(tiles);
+        } else {
+            // For delivery, we need a delivery point
+            goalPos = this._generateDeliveryObjective(tiles);
+        }
         
-        // Ensure path exists between start and goal
-        this._ensurePath(tiles, startPos, goalPos);
+        // Place mines (danger zones to avoid)
+        const mines = this._placeMines(tiles, startPos, goalPos, missionType);
         
-        // Add random mines
-        const mines = this._placeMines(tiles, startPos, goalPos);
+        // Ensure there's always a safe path
+        this._ensurePath(tiles, startPos, goalPos, missionType);
         
         return {
-            tiles,
-            buildings,
-            start: startPos,
-            goal: goalPos,
-            mines,
-            width: this.width,
-            height: this.height,
-            tileSize: this.tileSize
+            tiles: tiles,
+            startPos: startPos,
+            goalPos: goalPos,
+            buildings: buildings,
+            mines: mines,
+            missionType: missionType
         };
     }
 
@@ -903,9 +924,10 @@ class MapGenerator {
      * @param {Array} tiles - 2D array of map tiles
      * @param {Object} startPos - Starting position
      * @param {Object} goalPos - Goal position
+     * @param {string} missionType - Type of mission ('evacuation' or 'delivery')
      * @private
      */
-    _ensurePath(tiles, startPos, goalPos) {
+    _ensurePath(tiles, startPos, goalPos, missionType) {
         // Simple approach: create a corridor along X, then along Y
         const pathX = startPos.tileX < goalPos.tileX ? 
             { start: startPos.tileX, end: goalPos.tileX } : 
@@ -939,10 +961,11 @@ class MapGenerator {
      * @param {Array} tiles - 2D array of map tiles
      * @param {Object} startPos - Starting position
      * @param {Object} goalPos - Goal position
+     * @param {string} missionType - Type of mission ('evacuation' or 'delivery')
      * @returns {Array} Array of mine positions
      * @private
      */
-    _placeMines(tiles, startPos, goalPos) {
+    _placeMines(tiles, startPos, goalPos, missionType) {
         // Vary mine count between 3 and 6
         const mineCount = getRandomInt(3, 6);
         const mines = [];
@@ -1219,17 +1242,6 @@ class MapGenerator {
                             }
                         }
                     }
-                } else {
-                    // Create an H-shape from a 2x4
-                    shape = "H-shape";
-                    for (let dy = 0; dy < height; dy++) {
-                        for (let dx = 0; dx < width; dx++) {
-                            // Skip middle areas to make an H
-                            if (dx === 0 || dx === width - 1 || dy === Math.floor(height / 2)) {
-                                tiles[y + dy][x + dx] = this.terrainTypes.WALL;
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -1342,5 +1354,209 @@ class MapGenerator {
         }
         
         return map.tiles[tileY][tileX];
+    }
+
+    /**
+     * Generate evacuation objectives
+     * @param {Array} tiles - 2D array of tile types
+     * @returns {Object} Goal position with x, y, tileX, tileY
+     * @private
+     */
+    _generateEvacuationObjectives(tiles) {
+        // Find a suitable spot away from start for civilians
+        // Try to find an open area (preferably dirt) away from the edge
+        const safePos = this._findSafePosition(tiles, 5);
+        
+        // Convert tile position to pixel position
+        const x = safePos.tileX * this.tileSize + (this.tileSize / 2);
+        const y = safePos.tileY * this.tileSize + (this.tileSize / 2);
+        
+        // Clear the area around the position (for accessibility)
+        this._clearArea(tiles, safePos.tileX, safePos.tileY, 2);
+        
+        return {
+            x: x,
+            y: y,
+            tileX: safePos.tileX,
+            tileY: safePos.tileY
+        };
+    }
+    
+    /**
+     * Generate delivery objective
+     * @param {Array} tiles - 2D array of tile types
+     * @returns {Object} Goal position with x, y, tileX, tileY
+     * @private
+     */
+    _generateDeliveryObjective(tiles) {
+        // Find a suitable delivery spot
+        // For delivery, road access might be preferred
+        const hasRoads = this._hasRoadTiles(tiles);
+        
+        let goalPos;
+        if (hasRoads) {
+            // Try to find a spot near a road
+            goalPos = this._findPositionNearRoad(tiles);
+        } else {
+            // Fallback to any safe position
+            goalPos = this._findSafePosition(tiles, 5);
+        }
+        
+        // Convert tile position to pixel position
+        const x = goalPos.tileX * this.tileSize + (this.tileSize / 2);
+        const y = goalPos.tileY * this.tileSize + (this.tileSize / 2);
+        
+        // Clear the area around the delivery point
+        this._clearArea(tiles, goalPos.tileX, goalPos.tileY, 2);
+        
+        return {
+            x: x,
+            y: y,
+            tileX: goalPos.tileX,
+            tileY: goalPos.tileY
+        };
+    }
+    
+    /**
+     * Check if the map has road tiles
+     * @param {Array} tiles - 2D array of tile types
+     * @returns {boolean} Whether the map has road tiles
+     * @private
+     */
+    _hasRoadTiles(tiles) {
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[y].length; x++) {
+                if (tiles[y][x] === this.terrainTypes.ASPHALT) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Find a position near a road
+     * @param {Array} tiles - 2D array of tile types
+     * @returns {Object} Position near a road {tileX, tileY}
+     * @private
+     */
+    _findPositionNearRoad(tiles) {
+        const roadTiles = [];
+        
+        // Find all road tiles
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[y].length; x++) {
+                if (tiles[y][x] === this.terrainTypes.ASPHALT) {
+                    roadTiles.push({tileX: x, tileY: y});
+                }
+            }
+        }
+        
+        // If no road tiles found, fallback to a safe position
+        if (roadTiles.length === 0) {
+            return this._findSafePosition(tiles, 5);
+        }
+        
+        // Select a random road tile
+        const randomRoadTile = roadTiles[Math.floor(Math.random() * roadTiles.length)];
+        
+        // Find a nearby non-road tile for the objective
+        const directions = [
+            {x: 1, y: 0}, {x: -1, y: 0}, {x: 0, y: 1}, {x: 0, y: -1},
+            {x: 1, y: 1}, {x: -1, y: 1}, {x: 1, y: -1}, {x: -1, y: -1}
+        ];
+        
+        // Shuffle directions for randomness
+        shuffleArray(directions);
+        
+        // Try each direction
+        for (const dir of directions) {
+            const adjX = randomRoadTile.tileX + dir.x;
+            const adjY = randomRoadTile.tileY + dir.y;
+            
+            // Check if this is a valid position
+            if (adjX >= 0 && adjX < tiles[0].length && adjY >= 0 && adjY < tiles.length) {
+                // Check if it's not a road, water or wall
+                if (tiles[adjY][adjX] !== this.terrainTypes.ASPHALT && 
+                    tiles[adjY][adjX] !== this.terrainTypes.WATER &&
+                    tiles[adjY][adjX] !== this.terrainTypes.WALL) {
+                    return {tileX: adjX, tileY: adjY};
+                }
+            }
+        }
+        
+        // If no suitable adjacent tile found, fallback to a safe position
+        return this._findSafePosition(tiles, 5);
+    }
+    
+    /**
+     * Find a safe position for objectives
+     * @param {Array} tiles - 2D array of tile types
+     * @param {number} borderPadding - Padding from borders
+     * @returns {Object} Safe position {tileX, tileY}
+     * @private
+     */
+    _findSafePosition(tiles, borderPadding = 2) {
+        // Define a safety score function for positions
+        const getSafetyScore = (x, y) => {
+            // Avoid edges
+            if (x < borderPadding || y < borderPadding || 
+                x >= tiles[0].length - borderPadding || 
+                y >= tiles.length - borderPadding) {
+                return -1; // Unsafe
+            }
+            
+            // Avoid water and walls
+            if (tiles[y][x] === this.terrainTypes.WATER || 
+                tiles[y][x] === this.terrainTypes.WALL) {
+                return -1; // Unsafe
+            }
+            
+            // Count number of dirt tiles around this position (3x3 area)
+            let dirtCount = 0;
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    const checkX = x + dx;
+                    const checkY = y + dy;
+                    
+                    if (checkX >= 0 && checkX < tiles[0].length && 
+                        checkY >= 0 && checkY < tiles.length &&
+                        tiles[checkY][checkX] === this.terrainTypes.DIRT) {
+                        dirtCount++;
+                    }
+                }
+            }
+            
+            return dirtCount; // Higher score = more dirt around = better
+        };
+        
+        // Try to find a good spot with high safety score
+        const candidates = [];
+        
+        for (let y = 0; y < tiles.length; y++) {
+            for (let x = 0; x < tiles[0].length; x++) {
+                const score = getSafetyScore(x, y);
+                if (score > 0) {
+                    candidates.push({tileX: x, tileY: y, score: score});
+                }
+            }
+        }
+        
+        // Sort candidates by score (highest first)
+        candidates.sort((a, b) => b.score - a.score);
+        
+        // Select one of the top 5 candidates randomly
+        const topN = Math.min(5, candidates.length);
+        const randomIndex = Math.floor(Math.random() * topN);
+        
+        // If no candidates found, use center of map
+        if (candidates.length === 0) {
+            return {
+                tileX: Math.floor(tiles[0].length / 2), 
+                tileY: Math.floor(tiles.length / 2)
+            };
+        }
+        
+        return candidates[randomIndex];
     }
 } 

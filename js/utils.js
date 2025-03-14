@@ -81,4 +81,13 @@ function formatTime(seconds) {
 // Ease the movement of objects for smoother animations
 function lerp(start, end, factor) {
     return start * (1 - factor) + end * factor;
+}
+
+// Shuffle an array randomly (Fisher-Yates algorithm)
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 } 

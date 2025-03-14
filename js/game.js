@@ -7,14 +7,14 @@ class Game {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d');
         
-        // Set canvas dimensions
-        this.width = 800;
-        this.height = 544; // Adjusted to exactly 17 tiles (17 * 32 = 544) to avoid partial tiles at bottom
-        canvas.width = this.width;
-        canvas.height = this.height;
-        
-        // Define tile size (32x32 grid results in 25x17 tiles)
+        // Define tile size (32x32 grid results in 25x17 tiles on desktop)
         this.tileSize = 32;
+        
+        // Detect if we're on mobile
+        this.isMobileDevice = this._detectMobileDevice();
+        
+        // Set canvas dimensions based on device type
+        this._setupCanvasDimensions();
         
         // Create components
         this.audioManager = new AudioManager();
@@ -51,6 +51,117 @@ class Game {
         
         // Initialize game
         this._init();
+    }
+
+    /**
+     * Detect if the device is mobile
+     * @returns {boolean} Whether the device is mobile
+     * @private
+     */
+    _detectMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               window.innerWidth <= 900;
+    }
+
+    /**
+     * Set up canvas dimensions based on device type
+     * @private
+     */
+    _setupCanvasDimensions() {
+        if (this.isMobileDevice) {
+            // For mobile, calculate dimensions based on available screen space
+            const isLandscape = window.innerWidth > window.innerHeight;
+            
+            if (isLandscape) {
+                // Get available screen dimensions
+                // Account for HUD height (using a smaller HUD on mobile)
+                const hudHeight = window.innerHeight <= 400 ? 25 : 30;
+                const availableWidth = window.innerWidth;
+                const availableHeight = window.innerHeight - hudHeight;
+                
+                // Calculate how many tiles can fit in the available space
+                const tilesX = Math.floor(availableWidth / this.tileSize);
+                const tilesY = Math.floor(availableHeight / this.tileSize);
+                
+                // Set canvas dimensions to be exactly the right size for the number of tiles
+                this.width = tilesX * this.tileSize;
+                this.height = tilesY * this.tileSize;
+                
+                // Store tile counts for map generation
+                this.tilesX = tilesX;
+                this.tilesY = tilesY;
+                
+                console.log(`Mobile canvas dimensions: ${this.width}x${this.height} (${tilesX}x${tilesY} tiles)`);
+            } else {
+                // In portrait, prompt to rotate device but use a smaller grid
+                // This is a fallback for portrait mode
+                const availableWidth = window.innerWidth;
+                const availableHeight = window.innerHeight / 2; // Use half height for game
+                
+                // Calculate how many tiles can fit in the available space
+                const tilesX = Math.floor(availableWidth / this.tileSize);
+                const tilesY = Math.floor(availableHeight / this.tileSize);
+                
+                // Set canvas dimensions to be exactly the right size for the number of tiles
+                this.width = tilesX * this.tileSize;
+                this.height = tilesY * this.tileSize;
+                
+                // Store tile counts for map generation
+                this.tilesX = tilesX;
+                this.tilesY = tilesY;
+                
+                console.log(`Mobile portrait dimensions: ${this.width}x${this.height} (${tilesX}x${tilesY} tiles)`);
+            }
+        } else {
+            // For desktop, use the original fixed dimensions
+            this.width = 800;
+            this.height = 544; // Adjusted to exactly 17 tiles (17 * 32 = 544)
+            
+            // Store tile counts for map generation
+            this.tilesX = Math.floor(this.width / this.tileSize); // 25 tiles
+            this.tilesY = Math.floor(this.height / this.tileSize); // 17 tiles
+        }
+        
+        // Set the actual canvas width and height
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+    }
+
+    /**
+     * Handle window resize
+     * This allows the game to adjust its dimensions when the screen size changes
+     */
+    handleResize() {
+        // Only resize if we're on mobile
+        if (this.isMobileDevice) {
+            // Store the original player position as a percentage of the canvas
+            const playerXPercent = this.player ? this.player.x / this.width : 0.5;
+            const playerYPercent = this.player ? this.player.y / this.height : 0.5;
+            
+            // Recalculate canvas dimensions
+            this._setupCanvasDimensions();
+            
+            // If we have a map, regenerate it with new dimensions
+            if (this.currentMap && this.isRunning) {
+                // Generate a new map with the new dimensions
+                this.currentMap = this.mapGenerator.generateMap(this.tilesX, this.tilesY);
+                
+                // Reposition player at the same relative position
+                if (this.player) {
+                    this.player.x = Math.floor(playerXPercent * this.width);
+                    this.player.y = Math.floor(playerYPercent * this.height);
+                }
+                
+                // Reset missions and drones if they exist
+                if (this.missionManager) {
+                    this.missionManager.reset(this.currentMap);
+                }
+                
+                if (this.droneManager) {
+                    this.droneManager.reset();
+                }
+            }
+        }
     }
 
     /**
@@ -95,6 +206,13 @@ class Game {
         
         // Detect mobile devices and adjust game settings accordingly
         this._setupMobileDetection();
+        
+        // Add resize handler
+        window.addEventListener('resize', () => this.handleResize());
+        window.addEventListener('orientationchange', () => {
+            // Delay to allow orientation change to complete
+            setTimeout(() => this.handleResize(), 300);
+        });
         
         // Show a message that we're running without audio
         console.log('Game ready - running without audio files is fine');
@@ -756,8 +874,8 @@ class Game {
         // Reset score
         this.score = 0;
         
-        // Reset player position
-        this.player.resetPosition(this.width / 2, this.height / 2);
+        // Reset player position to center of canvas
+        this.player.resetToCenter(this.width, this.height);
         
         // Reset EW state
         this.player.resetEW();
@@ -793,8 +911,14 @@ class Game {
      * @private
      */
     _startNewMission(missionType) {
-        // Generate new map and start mission
-        this.currentMap = this.missionManager.startNewMission(missionType);
+        // Ensure canvas dimensions are set correctly
+        this._setupCanvasDimensions();
+        
+        // Generate new map and start mission - pass correct tile dimensions
+        this.currentMap = this.mapGenerator.generateMap(this.tilesX, this.tilesY);
+        
+        // Reset mission manager with this map
+        this.missionManager.reset(this.currentMap);
         
         // Reset or create drone manager with new map
         if (this.droneManager) {

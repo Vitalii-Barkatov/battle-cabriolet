@@ -22,7 +22,8 @@ class MissionManager {
 
         this.isActive = false;
         this.showMissionCompleteText = true;
-        this.missionCompleteTimer = this.missionCompleteDisplayTime;
+        this.missionCompleteTimer = 0;
+        this.missionCompleteDisplayTime = 3000; // 3 seconds
     }
 
     /**
@@ -52,13 +53,38 @@ class MissionManager {
             this.player.hasRescue = false;
         }
         
-        // Generate new map
+        // Generate map based on mission type
         this.currentMap = this.mapGenerator.generateMap(this.missionType);
         
-        // Reset player position
-        this.player.resetPosition(this.currentMap.start.x, this.currentMap.start.y);
+        // Set initial player position at start
+        if (this.currentMap.startPos) {
+            this.player.x = this.currentMap.startPos.x;
+            this.player.y = this.currentMap.startPos.y;
+        }
         
         return this.currentMap;
+    }
+
+    /**
+     * Reset the mission manager with an existing map
+     * @param {Object} map - The map to reset with
+     */
+    reset(map) {
+        this.currentMap = map;
+        this.missionPhase = 0;
+        this.missionComplete = false;
+        
+        // Set appropriate mission type from the map
+        this.missionType = map.missionType || this.missionTypes.DELIVERY;
+        
+        // Set initial player state based on mission type
+        if (this.missionType === this.missionTypes.DELIVERY) {
+            this.player.hasCargo = true;
+            this.player.hasRescue = false;
+        } else {
+            this.player.hasCargo = false;
+            this.player.hasRescue = false;
+        }
     }
 
     /**
@@ -122,18 +148,40 @@ class MissionManager {
     }
 
     /**
-     * Get current mission objective text
-     * @returns {string} Objective description
+     * Get the current objective position
+     * @returns {Object} Objective position {x, y}
+     */
+    getCurrentObjectivePosition() {
+        if (this.missionPhase === 0) {
+            // Going to objective
+            return this.currentMap.goalPos;
+        } else {
+            // Returning to start
+            return this.currentMap.startPos;
+        }
+    }
+
+    /**
+     * Get the current objective text
+     * @returns {string} Current objective text
      */
     getCurrentObjectiveText() {
+        if (this.missionComplete) {
+            return GameTexts.missions.complete;
+        }
+        
         if (this.missionType === this.missionTypes.EVACUATION) {
-            return this.missionPhase === 0 ? 
-                GameTexts.mission.evacuation.phase0 : 
-                GameTexts.mission.evacuation.phase1;
-        } else {
-            return this.missionPhase === 0 ? 
-                GameTexts.mission.delivery.phase0 : 
-                GameTexts.mission.delivery.phase1;
+            if (this.missionPhase === 0) {
+                return GameTexts.missions.evacuationObjective;
+            } else {
+                return GameTexts.missions.returnWithEvacuees;
+            }
+        } else { // Delivery mission
+            if (this.missionPhase === 0) {
+                return GameTexts.missions.deliveryObjective;
+            } else {
+                return GameTexts.missions.returnToBriefing;
+            }
         }
     }
 
@@ -217,14 +265,6 @@ class MissionManager {
      */
     isMissionComplete() {
         return this.missionComplete;
-    }
-
-    /**
-     * Get objective position based on current mission phase
-     * @returns {Object} Current objective position
-     */
-    getCurrentObjectivePosition() {
-        return this.missionPhase === 0 ? this.currentMap.goal : this.currentMap.start;
     }
 
     /**

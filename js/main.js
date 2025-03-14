@@ -63,36 +63,17 @@ function hideAddressBar() {
  * @param {Game} game - Game instance
  */
 function resizeGameForMobile(game) {
-    // Check if this is a mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 900;
+    // Instead of scaling via CSS, use the game's internal resize method
+    if (game && typeof game.handleResize === 'function') {
+        game.handleResize();
+    }
     
-    if (isMobile) {
-        const gameContainer = document.getElementById('game-container');
-        const isLandscape = window.innerWidth > window.innerHeight;
-        
-        if (isLandscape) {
-            // In landscape, we want the game to fill the screen width
-            // Calculate dimensions based on the original aspect ratio
-            const aspectRatio = 800 / 600; // Original width / height
-            
-            // Set the container width to screen width
-            gameContainer.style.width = '100%';
-            
-            // Adjust the HUD height based on screen size
-            const hudHeight = window.innerHeight <= 400 ? 25 : 30;
-            document.getElementById('hud').style.height = `${hudHeight}px`;
-            
-            // Update game canvas position
-            game.canvas.style.top = `${hudHeight}px`;
-            game.canvas.style.height = `calc(100% - ${hudHeight}px)`;
-            
-            // Also update mobile controls position
-            const mobileControls = document.getElementById('mobile-controls');
-            if (mobileControls) {
-                mobileControls.style.top = `${hudHeight}px`;
-                mobileControls.style.height = `calc(100% - ${hudHeight}px)`;
-            }
-        }
+    // Update the mobile controls position to match the new canvas
+    const mobileControls = document.getElementById('mobile-controls');
+    if (mobileControls) {
+        const hudHeight = window.innerHeight <= 400 ? 25 : 30;
+        mobileControls.style.top = `${hudHeight}px`;
+        mobileControls.style.height = `calc(100% - ${hudHeight}px)`;
     }
 }
 
