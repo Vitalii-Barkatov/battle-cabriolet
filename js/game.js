@@ -894,81 +894,107 @@ class Game {
         const dpadLeft = document.getElementById('dpad-left');
         const rebButton = document.getElementById('reb-button');
         
-        // Touch event handlers for D-pad
-        const handleTouchStart = (direction) => {
-            return (e) => {
+        if (!dpadUp || !dpadRight || !dpadDown || !dpadLeft || !rebButton) {
+            console.warn('Mobile control elements not found');
+            return;
+        }
+        
+        // Touch event handlers for D-pad with tap and hold functionality
+        const setupDirectionalButton = (element, direction) => {
+            let isPressed = false;
+            
+            const startHandler = (e) => {
                 e.preventDefault();
-                this.keys[direction] = true;
+                if (!isPressed) {
+                    isPressed = true;
+                    this.keys[direction] = true;
+                    element.classList.add('active');
+                }
             };
+            
+            const endHandler = (e) => {
+                e.preventDefault();
+                if (isPressed) {
+                    isPressed = false;
+                    this.keys[direction] = false;
+                    element.classList.remove('active');
+                }
+            };
+            
+            // Add touch events
+            element.addEventListener('touchstart', startHandler);
+            element.addEventListener('touchend', endHandler);
+            element.addEventListener('touchcancel', endHandler);
+            
+            // Add mouse events for desktop testing
+            element.addEventListener('mousedown', startHandler);
+            element.addEventListener('mouseup', endHandler);
+            element.addEventListener('mouseleave', endHandler);
+            
+            // For iOS compatibility - prevent defaults
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+            });
         };
         
-        const handleTouchEnd = (direction) => {
-            return (e) => {
-                e.preventDefault();
-                this.keys[direction] = false;
-            };
-        };
+        // Setup each directional button
+        setupDirectionalButton(dpadUp, 'ArrowUp');
+        setupDirectionalButton(dpadRight, 'ArrowRight');
+        setupDirectionalButton(dpadDown, 'ArrowDown');
+        setupDirectionalButton(dpadLeft, 'ArrowLeft');
         
-        // Setup touch events for d-pad
-        dpadUp.addEventListener('touchstart', handleTouchStart('ArrowUp'));
-        dpadUp.addEventListener('touchend', handleTouchEnd('ArrowUp'));
-        dpadUp.addEventListener('touchcancel', handleTouchEnd('ArrowUp'));
+        // Setup REB button with active state
+        let rebIsPressed = false;
         
-        dpadRight.addEventListener('touchstart', handleTouchStart('ArrowRight'));
-        dpadRight.addEventListener('touchend', handleTouchEnd('ArrowRight'));
-        dpadRight.addEventListener('touchcancel', handleTouchEnd('ArrowRight'));
-        
-        dpadDown.addEventListener('touchstart', handleTouchStart('ArrowDown'));
-        dpadDown.addEventListener('touchend', handleTouchEnd('ArrowDown'));
-        dpadDown.addEventListener('touchcancel', handleTouchEnd('ArrowDown'));
-        
-        dpadLeft.addEventListener('touchstart', handleTouchStart('ArrowLeft'));
-        dpadLeft.addEventListener('touchend', handleTouchEnd('ArrowLeft'));
-        dpadLeft.addEventListener('touchcancel', handleTouchEnd('ArrowLeft'));
-        
-        // Setup touch events for REB button
         rebButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.keys[' '] = true; // Space key is used for EW activation
+            if (!rebIsPressed) {
+                rebIsPressed = true;
+                this.keys[' '] = true; // Space key is used for EW activation
+                rebButton.classList.add('active');
+            }
         });
         
-        rebButton.addEventListener('touchend', (e) => {
+        const rebEndHandler = (e) => {
             e.preventDefault();
-            this.keys[' '] = false;
-        });
+            if (rebIsPressed) {
+                rebIsPressed = false;
+                this.keys[' '] = false;
+                rebButton.classList.remove('active');
+            }
+        };
         
-        rebButton.addEventListener('touchcancel', (e) => {
-            e.preventDefault();
-            this.keys[' '] = false;
-        });
+        rebButton.addEventListener('touchend', rebEndHandler);
+        rebButton.addEventListener('touchcancel', rebEndHandler);
         
         // Add mouse events for desktop testing
-        dpadUp.addEventListener('mousedown', handleTouchStart('ArrowUp'));
-        dpadUp.addEventListener('mouseup', handleTouchEnd('ArrowUp'));
-        dpadUp.addEventListener('mouseleave', handleTouchEnd('ArrowUp'));
-        
-        dpadRight.addEventListener('mousedown', handleTouchStart('ArrowRight'));
-        dpadRight.addEventListener('mouseup', handleTouchEnd('ArrowRight'));
-        dpadRight.addEventListener('mouseleave', handleTouchEnd('ArrowRight'));
-        
-        dpadDown.addEventListener('mousedown', handleTouchStart('ArrowDown'));
-        dpadDown.addEventListener('mouseup', handleTouchEnd('ArrowDown'));
-        dpadDown.addEventListener('mouseleave', handleTouchEnd('ArrowDown'));
-        
-        dpadLeft.addEventListener('mousedown', handleTouchStart('ArrowLeft'));
-        dpadLeft.addEventListener('mouseup', handleTouchEnd('ArrowLeft'));
-        dpadLeft.addEventListener('mouseleave', handleTouchEnd('ArrowLeft'));
-        
         rebButton.addEventListener('mousedown', (e) => {
-            this.keys[' '] = true;
+            if (!rebIsPressed) {
+                rebIsPressed = true;
+                this.keys[' '] = true;
+                rebButton.classList.add('active');
+            }
         });
         
         rebButton.addEventListener('mouseup', (e) => {
-            this.keys[' '] = false;
+            if (rebIsPressed) {
+                rebIsPressed = false;
+                this.keys[' '] = false;
+                rebButton.classList.remove('active');
+            }
         });
         
         rebButton.addEventListener('mouseleave', (e) => {
-            this.keys[' '] = false;
+            if (rebIsPressed) {
+                rebIsPressed = false;
+                this.keys[' '] = false;
+                rebButton.classList.remove('active');
+            }
+        });
+        
+        // For iOS compatibility - prevent defaults
+        rebButton.addEventListener('click', (e) => {
+            e.preventDefault();
         });
     }
     

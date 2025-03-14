@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#000000">
     <title>Бойовий кабріолет</title>
@@ -18,6 +19,27 @@
       gtag('config', 'G-0B1KMRDXDF');
     </script>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+      /* Viewport height fix for mobile browsers */
+      :root {
+        --vh: 1vh;
+      }
+      @supports (height: 100dvh) {
+        #game-container {
+          height: 100dvh;
+        }
+      }
+    </style>
+    <script>
+      // Update CSS variable for viewport height on mobile
+      function updateVH() {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      }
+      window.addEventListener('resize', updateVH);
+      window.addEventListener('orientationchange', updateVH);
+      document.addEventListener('DOMContentLoaded', updateVH);
+    </script>
 </head>
 <body>
     <img src="assets/images/left-bg.png" class="left-background" alt="Left background">
@@ -127,12 +149,12 @@
         <!-- Mobile Controls -->
         <div id="mobile-controls" class="hidden">
             <div id="dpad-container">
-                <div id="dpad-up" class="dpad-button">&#9650;</div>
-                <div id="dpad-right" class="dpad-button">&#9654;</div>
-                <div id="dpad-down" class="dpad-button">&#9660;</div>
-                <div id="dpad-left" class="dpad-button">&#9664;</div>
+                <button id="dpad-up" class="dpad-button" aria-label="Move Up">&#9650;</button>
+                <button id="dpad-right" class="dpad-button" aria-label="Move Right">&#9654;</button>
+                <button id="dpad-down" class="dpad-button" aria-label="Move Down">&#9660;</button>
+                <button id="dpad-left" class="dpad-button" aria-label="Move Left">&#9664;</button>
             </div>
-            <div id="reb-button">РЕБ</div>
+            <button id="reb-button" aria-label="Activate REB">РЕБ</button>
         </div>
     </div>
     <div class="footer-container">
