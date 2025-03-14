@@ -875,10 +875,24 @@ class Game {
         this.score = 0;
         
         // Reset player position to center of canvas
-        this.player.resetToCenter(this.width, this.height);
+        if (this.player && typeof this.player.resetToCenter === 'function') {
+            this.player.resetToCenter(this.width, this.height);
+        } else {
+            // Create a new player if it doesn't exist or is incorrectly initialized
+            this.player = new Player(
+                Math.floor(this.width / 2), 
+                Math.floor(this.height / 2), 
+                this.tileSize, 
+                this.tileSize, 
+                this.audioManager
+            );
+            console.log("Player was recreated due to initialization issue");
+        }
         
         // Reset EW state
-        this.player.resetEW();
+        if (this.player && typeof this.player.resetEW === 'function') {
+            this.player.resetEW();
+        }
         
         // Reset game state
         this.isGameOver = false;
@@ -986,6 +1000,19 @@ class Game {
         this.isRunning = true;
         
         // Don't reset score - intentionally keeping it
+        
+        // Make sure player is properly initialized before starting a new mission
+        if (!this.player || typeof this.player.resetToCenter !== 'function') {
+            // Recreate player if needed
+            this.player = new Player(
+                Math.floor(this.width / 2), 
+                Math.floor(this.height / 2), 
+                this.tileSize, 
+                this.tileSize, 
+                this.audioManager
+            );
+            console.log("Player was recreated during revival");
+        }
         
         // We need a full mission restart while keeping the score
         // Start a new mission (reusing the existing method)
