@@ -895,7 +895,7 @@ class UI {
             // Create prompt content
             fullscreenPrompt.innerHTML = `
                 <div class="fullscreen-icon">⛶</div>
-                <p>Для кращого досвіду, перейдіть в повноекранний режим</p>
+                <p>Для кращого досвіту, перейдіть в повноекранний режим</p>
                 <button id="go-fullscreen-button" class="highlight-button">Повний екран</button>
                 <button id="skip-fullscreen-button">Пропустити</button>
             `;
@@ -1157,18 +1157,6 @@ class UI {
             // Set up the REB cooldown visualization for the REB button
             this._setupRebButtonCooldown();
             
-            // Setup screen orientation warning if needed
-            this._setupOrientationWarning();
-            
-            // Listen for orientation changes to update the introduction text
-            window.addEventListener('orientationchange', () => {
-                setTimeout(() => this._updateIntroTextForMobile(), 300);
-            });
-            
-            window.addEventListener('resize', () => {
-                this._updateIntroTextForMobile();
-            });
-            
             // Handle iOS safe areas
             if ((/iPhone|iPad|iPod/i.test(navigator.userAgent) && /WebKit/i.test(navigator.userAgent)) || 
                 document.documentElement.style.getPropertyValue('--safe-area-inset-top')) {
@@ -1205,49 +1193,6 @@ class UI {
     }
     
     /**
-     * Setup orientation warning for mobile devices
-     * @private
-     */
-    _setupOrientationWarning() {
-        // Create orientation warning element if it doesn't exist
-        if (!document.getElementById('orientation-warning')) {
-            const warning = document.createElement('div');
-            warning.id = 'orientation-warning';
-            warning.textContent = 'Будь ласка, переверніть пристрій для кращого ігрового досвіту.';
-            warning.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.9);
-                color: white;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                padding: 20px;
-                z-index: 9999;
-                font-size: 24px;
-            `;
-            document.body.appendChild(warning);
-            
-            // Check orientation and show/hide warning
-            const checkOrientation = () => {
-                if (window.innerHeight > window.innerWidth) { // Portrait
-                    warning.style.display = 'flex';
-                } else { // Landscape
-                    warning.style.display = 'none';
-                }
-            };
-            
-            // Check immediately and on resize
-            checkOrientation();
-            window.addEventListener('resize', checkOrientation);
-        }
-    }
-    
-    /**
      * Update the introduction text for mobile devices
      * @private
      */
@@ -1276,7 +1221,7 @@ class UI {
             // Create prompt content
             fullscreenPrompt.innerHTML = `
                 <div class="fullscreen-icon">⛶</div>
-                <p>Для кращого досвіду, перейдіть в повноекранний режим</p>
+                <p>Для кращого досвіту, перейдіть в повноекранний режим</p>
                 <button id="initial-go-fullscreen-button" class="highlight-button">Повний екран</button>
                 <button id="initial-skip-fullscreen-button">Пропустити</button>
             `;
@@ -1597,12 +1542,6 @@ class UI {
             .catch(error => {
                 console.error("Error checking leaderboard placement:", error);
             });
-        
-        // Check if the device is in portrait mode on mobile
-        if (isMobile && window.innerHeight > window.innerWidth) {
-            // Show message to rotate for better gameplay
-            this.showMessage(GameTexts.messages.rotateDevice || "Поверніть пристрій для кращої гри", 5000);
-        }
     }
 
     /**

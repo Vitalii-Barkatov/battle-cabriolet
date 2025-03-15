@@ -100,38 +100,39 @@ class Game {
         this._handleOrientation(isLandscape);
         
         if (this.isMobileDevice) {
-            // For mobile, use viewport-filling dimensions when in landscape
-            if (isLandscape) {
-                // Account for HUD height (using a smaller HUD on mobile)
-                const hudHeight = window.innerHeight <= 400 ? 25 : 30;
-                
-                // Get available dimensions (full viewport minus HUD)
-                const availableWidth = window.innerWidth;
-                const availableHeight = window.innerHeight - hudHeight;
-                
-                // Calculate how many complete tiles can fit
-                const tilesX = Math.floor(availableWidth / this.tileSize);
-                const tilesY = Math.floor(availableHeight / this.tileSize);
-                
-                // Set dimensions to fill the available space exactly
-                this.width = tilesX * this.tileSize;
-                this.height = tilesY * this.tileSize;
-                
-                // Store tile counts for map generation
-                this.tilesX = tilesX;
-                this.tilesY = tilesY;
-                
-                console.log(`Mobile canvas dimensions: ${this.width}x${this.height} (${tilesX}x${tilesY} tiles)`);
-                
-                // Apply full-screen mobile class to the game container
-                document.getElementById('game-container').classList.add('mobile-fullscreen');
-            } else {
-                // In portrait, prepare dimensions for when rotated to landscape
-                // This is just to have reasonable default values when rotated
-                this.width = 768;
-                this.height = 576;
-                this.tilesX = 24;
-                this.tilesY = 18;
+            // For mobile, use viewport-filling dimensions in both orientations
+            // Account for HUD height (using a smaller HUD on mobile)
+            const hudHeight = window.innerHeight <= 400 ? 25 : 30;
+            
+            // Get available dimensions (full viewport minus HUD)
+            const availableWidth = window.innerWidth;
+            const availableHeight = window.innerHeight - hudHeight;
+            
+            // Calculate how many complete tiles can fit
+            const tilesX = Math.floor(availableWidth / this.tileSize);
+            const tilesY = Math.floor(availableHeight / this.tileSize);
+            
+            // Set dimensions to fill the available space exactly
+            this.width = tilesX * this.tileSize;
+            this.height = tilesY * this.tileSize;
+            
+            // Store tile counts for map generation
+            this.tilesX = tilesX;
+            this.tilesY = tilesY;
+            
+            console.log(`Mobile canvas dimensions: ${this.width}x${this.height} (${tilesX}x${tilesY} tiles), orientation: ${isLandscape ? 'landscape' : 'portrait'}`);
+            
+            // Apply full-screen mobile class to the game container
+            document.getElementById('game-container').classList.add('mobile-fullscreen');
+            
+            // Ensure the game canvas is sized properly
+            const canvas = document.getElementById('game-canvas');
+            if (canvas) {
+                canvas.width = this.width;
+                canvas.height = this.height;
+                canvas.style.width = `${this.width}px`;
+                canvas.style.height = `${this.height}px`;
+                canvas.style.top = '30px'; // Below the HUD
             }
         } else {
             // For desktop, use the updated fixed dimensions
@@ -158,12 +159,12 @@ class Game {
      */
     _handleOrientation(isLandscape) {
         const gameContainer = document.getElementById('game-container');
-        const rotationMessage = document.getElementById('rotation-message') || this._createRotationMessage();
+        
+        // Always show game container regardless of orientation
+        gameContainer.style.display = 'block';
         
         if (isLandscape) {
-            // Landscape mode - show game, hide rotation message
-            gameContainer.style.display = 'block';
-            rotationMessage.style.display = 'none';
+            // Landscape mode setup
             
             // Show fullscreen button for mobile
             if (this.isMobileDevice && !this.fullscreenButtonShown) {
@@ -171,41 +172,48 @@ class Game {
                 this.fullscreenButtonShown = true;
             }
             
-            // Resume game if it was paused due to orientation
+            // Resume game if it was paused
             if (this.pausedForOrientation && this.isRunning) {
                 this.pausedForOrientation = false;
             }
         } else {
-            // Portrait mode - hide game, show rotation message
-            gameContainer.style.display = 'none';
-            rotationMessage.style.display = 'flex';
+            // Portrait mode setup - game remains visible
+            // Adjust any specific portrait mode settings here
             
-            // Pause game while in wrong orientation
-            if (this.isRunning && !this.isGameOver) {
-                this.pausedForOrientation = true;
-            }
+            // Game continues to run in portrait mode
+            this.pausedForOrientation = false;
         }
+        
+        // Ensure mobile controls are visible and correctly positioned
+        this._setupMobileControls(isLandscape);
     }
     
     /**
-     * Create rotation message element if it doesn't exist
-     * @returns {HTMLElement} The rotation message element
+     * Setup mobile controls based on orientation
+     * @param {boolean} isLandscape - Whether the device is in landscape mode
      * @private
      */
-    _createRotationMessage() {
-        const existingMessage = document.getElementById('rotation-message');
-        if (existingMessage) return existingMessage;
+    _setupMobileControls(isLandscape) {
+        if (!this.isMobileDevice) return;
         
-        const rotationMessage = document.createElement('div');
-        rotationMessage.id = 'rotation-message';
-        rotationMessage.innerHTML = `
-            <div class="rotation-content">
-                <div class="rotate-icon">⟳</div>
-                <p>Please rotate your device to landscape mode</p>
-            </div>
-        `;
-        document.body.appendChild(rotationMessage);
-        return rotationMessage;
+        const mobileControls = document.getElementById('mobile-controls');
+        if (!mobileControls) return;
+        
+        // Always show controls
+        mobileControls.style.display = 'flex';
+        
+        // Adjust control positioning based on orientation
+        if (isLandscape) {
+            // Landscape layout
+            mobileControls.style.flexDirection = 'row';
+            mobileControls.style.justifyContent = 'space-between';
+            mobileControls.style.alignItems = 'center';
+        } else {
+            // Portrait layout
+            mobileControls.style.flexDirection = 'column';
+            mobileControls.style.justifyContent = 'center';
+            mobileControls.style.alignItems = 'center';
+        }
     }
 
     /**
@@ -213,34 +221,31 @@ class Game {
      * This allows the game to adjust its dimensions when the screen size changes
      */
     handleResize() {
-        // Only resize if we're on mobile
-        if (this.isMobileDevice) {
-            // Store the original player position as a percentage of the canvas
-            const playerXPercent = this.player ? this.player.x / this.width : 0.5;
-            const playerYPercent = this.player ? this.player.y / this.height : 0.5;
+        // Store the original player position as a percentage of the canvas
+        const playerXPercent = this.player ? this.player.x / this.width : 0.5;
+        const playerYPercent = this.player ? this.player.y / this.height : 0.5;
+        
+        // Recalculate canvas dimensions
+        this._setupCanvasDimensions();
+        
+        // If we have a map, regenerate it with new dimensions
+        if (this.currentMap && this.isRunning) {
+            // Generate a new map with the new dimensions
+            this.currentMap = this.mapGenerator.generateMap(this.tilesX, this.tilesY);
             
-            // Recalculate canvas dimensions
-            this._setupCanvasDimensions();
+            // Reposition player at the same relative position
+            if (this.player) {
+                this.player.x = Math.floor(playerXPercent * this.width);
+                this.player.y = Math.floor(playerYPercent * this.height);
+            }
             
-            // If we have a map, regenerate it with new dimensions
-            if (this.currentMap && this.isRunning) {
-                // Generate a new map with the new dimensions
-                this.currentMap = this.mapGenerator.generateMap(this.tilesX, this.tilesY);
-                
-                // Reposition player at the same relative position
-                if (this.player) {
-                    this.player.x = Math.floor(playerXPercent * this.width);
-                    this.player.y = Math.floor(playerYPercent * this.height);
-                }
-                
-                // Reset missions and drones if they exist
-                if (this.missionManager) {
-                    this.missionManager.reset(this.currentMap);
-                }
-                
-                if (this.droneManager) {
-                    this.droneManager.reset();
-                }
+            // Reset missions and drones if they exist
+            if (this.missionManager) {
+                this.missionManager.reset(this.currentMap);
+            }
+            
+            if (this.droneManager) {
+                this.droneManager.reset();
             }
         }
     }

@@ -79,13 +79,40 @@ body {
 
 /* Full-screen mobile mode */
 #game-container.mobile-fullscreen {
+    position: fixed;
     width: 100vw;
     height: 100vh;
-    padding-top: 30px; /* Smaller HUD height for mobile */
-    border: none;
-    box-shadow: none;
-    box-sizing: border-box;
+    top: 0;
+    left: 0;
+    z-index: 100;
     margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+#game-container.mobile-fullscreen canvas {
+    margin-top: 30px; /* Account for HUD */
+    width: 100%;
+    height: calc(100% - 30px); /* Subtract HUD height */
+    object-fit: contain;
+}
+
+#game-container.mobile-fullscreen #hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    padding: 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 150;
 }
 
 /* Additional styles for fullscreen mode */
@@ -1006,64 +1033,105 @@ button:hover {
     touch-action: manipulation; /* Optimize for touch */
 }
 
-/* Rotation message for portrait mode */
-#rotation-message {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #000;
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-}
-
-.rotation-content {
-    background-color: rgba(30, 30, 30, 0.9);
-    border: 3px solid #555;
-    padding: 30px;
-    border-radius: 15px;
-    max-width: 90%;
-}
-
-.rotate-icon {
-    font-size: 60px;
-    animation: rotate 2s infinite;
-    margin-bottom: 20px;
-    color: #ffcc00;
-}
-
-.rotation-content p {
-    font-size: 20px;
-    line-height: 1.4;
-    margin: 10px 0;
-}
-
-@keyframes rotate {
-    0% { transform: rotate(0deg); }
-    25% { transform: rotate(90deg); }
-    50% { transform: rotate(90deg); }
-    75% { transform: rotate(0deg); }
-    100% { transform: rotate(0deg); }
-}
-
+/* Update media queries to allow both orientations */
 @media (orientation: portrait) {
+    /* Ensure game container is visible and fills the entire screen */
     #game-container {
-        display: none;
+        display: block !important;
+        width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: hidden;
     }
     
-    #rotation-message {
-        display: flex;
+    /* Ensure canvas fits within container and adjusts properly */
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: calc(100vh - 30px) !important; /* Account for HUD */
+        object-fit: contain;
+    }
+    
+    /* Adjust mobile controls for portrait mode */
+    #mobile-controls {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        bottom: 10%;
+        padding: 10px;
+    }
+    
+    #dpad-container {
+        margin-bottom: 20px;
+    }
+    
+    #reb-button {
+        margin-bottom: 20px;
+    }
+    
+    /* Mobile fullscreen in portrait */
+    #game-container.mobile-fullscreen {
+        height: 100vh !important;
+        width: 100vw !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+    
+    /* Ensure HUD stays at top */
+    #hud {
+        width: 100% !important;
+        height: 30px;
+        padding: 5px 10px;
+        font-size: 14px;
     }
 }
 
+/* Ensure the mobile controls adapt to both orientations */
 @media (orientation: landscape) {
-    #rotation-message {
-        display: none;
+    #mobile-controls {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+    }
+    
+    /* Standard canvas sizing in landscape */
+    canvas {
+        width: 768px;
+        height: 536px;
+    }
+    
+    /* But responsive for mobile */
+    @media (max-width: 767px) {
+        canvas {
+            width: 100% !important;
+            height: auto !important;
+        }
+    }
+}
+
+/* Ensure the game layout works well on smaller portrait screens */
+@media (orientation: portrait) and (max-width: 480px) {
+    #hud {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .ui-screen {
+        padding: 15px;
+    }
+    
+    #game-title {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+    
+    .menu-buttons button {
+        padding: 10px;
+        margin: 6px 0;
+        width: 80%;
     }
 }
 
@@ -1573,7 +1641,7 @@ body.mobile-device #game-over-screen .mobile-donation-section p,
     border: 1px solid rgba(100, 100, 100, 0.6);
 }
 
-/* Portrait mode background handling for menu */
+/* Portrait orientation specific styling */
 @media (orientation: portrait) and (max-width: 1024px) {
     body.mobile-device #menu-screen ~ .left-background {
         max-width: 130px;
@@ -1666,12 +1734,18 @@ body.mobile-device #menu-screen .introduction {
 /* Portrait orientation specific styling */
 @media (orientation: portrait) and (max-width: 1024px) {
     body.mobile-device #menu-screen {
-        background-size: 
-            120px auto,
-            120px auto;
-        background-position: 
-            left bottom,
-            right bottom;
+        background-size: 260px auto;
+        background-position: left top, right top;
+        padding-bottom: 140px;
+    }
+    
+    /* Menu content positioning */
+    body.mobile-device #menu-screen #game-title {
+        margin-top: 60px;
+    }
+    
+    body.mobile-device #menu-screen .menu-buttons {
+        margin-top: 20px;
     }
 }
 
