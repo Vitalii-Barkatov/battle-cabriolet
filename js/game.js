@@ -1197,77 +1197,169 @@ class Game {
     _setupMobileControls() {
         // Get mobile control elements
         const mobileControls = document.getElementById('mobile-controls');
-        const dpadUp = document.getElementById('dpad-up');
-        const dpadRight = document.getElementById('dpad-right');
-        const dpadDown = document.getElementById('dpad-down');
-        const dpadLeft = document.getElementById('dpad-left');
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickOuter = document.getElementById('joystick-outer');
+        const joystickInner = document.getElementById('joystick-inner');
         const rebButton = document.getElementById('reb-button');
         
-        if (!dpadUp || !dpadRight || !dpadDown || !dpadLeft || !rebButton) {
+        if (!joystickContainer || !joystickOuter || !joystickInner || !rebButton) {
             console.warn('Mobile control elements not found');
             return;
         }
         
         // Show mobile controls for mobile devices
         if (this.isMobileDevice) {
-            mobileControls.style.display = 'block';
+            mobileControls.style.display = 'flex';
         }
         
-        // Touch event handlers for D-pad with tap and hold functionality
-        const setupDirectionalButton = (element, direction) => {
-            let isPressed = false;
-            
-            const startHandler = (e) => {
-                e.preventDefault();
-                if (!isPressed) {
-                    isPressed = true;
-                    this.keys[direction] = true;
-                    
-                    // Update the player's last pressed key for consistent handling between keyboard and touch
-                    if (this.player) {
-                        this.player.lastPressedKey = direction;
-                    }
-                    
-                    element.classList.add('active');
-                }
-            };
-            
-            const endHandler = (e) => {
-                e.preventDefault();
-                if (isPressed) {
-                    isPressed = false;
-                    this.keys[direction] = false;
-                    
-                    // Reset player's lastPressedKey if it matches this direction
-                    if (this.player && this.player.lastPressedKey === direction) {
-                        this.player.lastPressedKey = null;
-                    }
-                    
-                    element.classList.remove('active');
-                }
-            };
-            
-            // Add touch events
-            element.addEventListener('touchstart', startHandler);
-            element.addEventListener('touchend', endHandler);
-            element.addEventListener('touchcancel', endHandler);
-            
-            // Add mouse events for desktop testing
-            element.addEventListener('mousedown', startHandler);
-            element.addEventListener('mouseup', endHandler);
-            element.addEventListener('mouseleave', endHandler);
-            
-            // For iOS compatibility - prevent defaults
-            element.addEventListener('click', (e) => {
-                e.preventDefault();
-            });
+        // Virtual joystick implementation
+        let joystickActive = false;
+        let startX = 0;
+        let startY = 0;
+        let centerX = 0;
+        let centerY = 0;
+        let currentX = 0;
+        let currentY = 0;
+        let lastDirection = { up: false, right: false, down: false, left: false };
+        
+        // Calculate joystick boundaries
+        const maxDistance = joystickOuter.clientWidth * 0.4; // 40% of joystick outer diameter
+        
+        // Initialize center position
+        const updateJoystickCenter = () => {
+            const rect = joystickOuter.getBoundingClientRect();
+            centerX = rect.left + rect.width / 2;
+            centerY = rect.top + rect.height / 2;
         };
         
-        // Setup each directional button
-        setupDirectionalButton(dpadUp, 'ArrowUp');
-        setupDirectionalButton(dpadRight, 'ArrowRight');
-        setupDirectionalButton(dpadDown, 'ArrowDown');
-        setupDirectionalButton(dpadLeft, 'ArrowLeft');
+        // Set up event listeners for joystick
+        const joystickStart = (e) => {
+            e.preventDefault();
+            joystickActive = true;
+            
+            // Update center position
+            updateJoystickCenter();
+            
+            // Get start position (either touch or mouse)
+            if (e.type.startsWith('touch')) {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+            
+            // Initial position
+            moveJoystick(startX, startY);
+        };
+        
+        const joystickMove = (e) => {
+            if (!joystickActive) return;
+            e.preventDefault();
+            
+            // Get current position
+            if (e.type.startsWith('touch')) {
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+            } else {
+                currentX = e.clientX;
+                currentY = e.clientY;
+            }
+            
+            moveJoystick(currentX, currentY);
+        };
+        
+        const joystickEnd = (e) => {
+            if (!joystickActive) return;
+            e.preventDefault();
+            joystickActive = false;
+            
+            // Reset joystick position
+            joystickInner.style.transform = 'translate(0px, 0px)';
+            
+            // Reset all key states
+            this.keys['ArrowUp'] = false;
+            this.keys['ArrowRight'] = false;
+            this.keys['ArrowDown'] = false;
+            this.keys['ArrowLeft'] = false;
+            
+            lastDirection = { up: false, right: false, down: false, left: false };
+        };
+        
+        const moveJoystick = (x, y) => {
+            // Calculate distance from center
+            const deltaX = x - centerX;
+            const deltaY = y - centerY;
+            
+            // Calculate distance
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            // Normalized direction vector
+            let dirX = deltaX / distance;
+            let dirY = deltaY / distance;
+            
+            // Limit distance to max radius
+            const limitedDistance = Math.min(distance, maxDistance);
+            
+            // Calculate joystick position
+            const moveX = dirX * limitedDistance;
+            const moveY = dirY * limitedDistance;
+            
+            // Move the joystick
+            joystickInner.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            
+            // Calculate direction based on angle
+            const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+            
+            // Determine which keys to activate based on direction
+            const newDirection = {
+                up: angle < -45 && angle > -135,
+                right: angle > -45 && angle < 45,
+                down: angle > 45 && angle < 135,
+                left: angle > 135 || angle < -135
+            };
+            
+            // Only update keys if direction changed or distance exceeds threshold
+            const threshold = 0.25 * maxDistance;
+            if (distance > threshold) {
+                if (newDirection.up !== lastDirection.up) {
+                    this.keys['ArrowUp'] = newDirection.up;
+                    lastDirection.up = newDirection.up;
+                }
+                
+                if (newDirection.right !== lastDirection.right) {
+                    this.keys['ArrowRight'] = newDirection.right;
+                    lastDirection.right = newDirection.right;
+                }
+                
+                if (newDirection.down !== lastDirection.down) {
+                    this.keys['ArrowDown'] = newDirection.down;
+                    lastDirection.down = newDirection.down;
+                }
+                
+                if (newDirection.left !== lastDirection.left) {
+                    this.keys['ArrowLeft'] = newDirection.left;
+                    lastDirection.left = newDirection.left;
+                }
+            }
+        };
+        
+        // Add touch events for joystick
+        joystickOuter.addEventListener('touchstart', joystickStart, { passive: false });
+        joystickOuter.addEventListener('touchmove', joystickMove, { passive: false });
+        joystickOuter.addEventListener('touchend', joystickEnd, { passive: false });
+        joystickOuter.addEventListener('touchcancel', joystickEnd, { passive: false });
+        
+        // Add mouse events for desktop testing
+        joystickOuter.addEventListener('mousedown', joystickStart, { passive: false });
+        window.addEventListener('mousemove', joystickMove, { passive: false });
+        window.addEventListener('mouseup', joystickEnd, { passive: false });
+        
+        // Handle orientation change
+        window.addEventListener('resize', updateJoystickCenter);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(updateJoystickCenter, 300);
+        });
         
         // Setup REB button with active state
         let rebIsPressed = false;
