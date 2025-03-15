@@ -382,6 +382,20 @@ class UI {
         if (submitScoreScreen) {
             submitScoreScreen.classList.add('hidden');
         }
+        
+        // Also hide the mobile controls when switching screens except for 'game'
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls && screenName !== 'game') {
+            mobileControls.classList.add('hidden');
+        } else if (mobileControls && screenName === 'game') {
+            // For game screen, ensure mobile controls are visible
+            mobileControls.classList.remove('hidden');
+            // If on mobile device, call ensureMobileControls to fully restore controls
+            if (document.body.classList.contains('mobile-device')) {
+                this._ensureMobileControls();
+            }
+        }
+        
         this.uiOverlay.classList.add('hidden');
         this.hud.classList.add('hidden');
         
@@ -403,6 +417,14 @@ class UI {
             case 'donation':
                 this.uiOverlay.classList.remove('hidden');
                 this.donationScreen.classList.remove('hidden');
+                
+                // Check if we're on a mobile device
+                const isMobile = document.body.classList.contains('mobile-device');
+                if (isMobile) {
+                    // Add mobile-optimized class to the donation screen
+                    this.donationScreen.classList.add('mobile-optimized');
+                }
+                
                 // Update the donation QR code when showing the donation screen
                 this._updateDonationQRCode(this.imageManager);
                 break;
@@ -600,6 +622,38 @@ class UI {
      * @private
      */
     _updateDonationQRCode(imageManager) {
+        // Check if we're on mobile device - skip QR code on mobile
+        const isMobile = document.body.classList.contains('mobile-device');
+        if (isMobile) {
+            // On mobile, hide the QR code placeholder, not the entire donation section
+            if (this.donationQrPlaceholder) {
+                this.donationQrPlaceholder.classList.add('mobile-hidden');
+                
+                // Make sure the Monobank link is visible and styled properly
+                const monobankLink = this.donationScreen.querySelector('#monobank-link');
+                if (monobankLink) {
+                    monobankLink.classList.add('mobile-donation-button');
+                    // Set the text content if it's empty
+                    if (!monobankLink.textContent) {
+                        monobankLink.textContent = 'Підтримати проєкт';
+                    }
+                }
+                
+                // Add mobile-enhanced class to donation links container
+                const donationLinks = this.donationScreen.querySelector('.donation-links');
+                if (donationLinks) {
+                    donationLinks.classList.add('mobile-enhanced');
+                }
+                
+                // Add mobile-donation-section class to the donation section
+                const donationSection = this.donationScreen.querySelector('.donation-section');
+                if (donationSection) {
+                    donationSection.classList.add('mobile-donation-section');
+                }
+            }
+            return;
+        }
+        
         // Use class's imageManager if available and none was provided
         imageManager = imageManager || this.imageManager;
         
@@ -690,7 +744,8 @@ class UI {
         this.gameStarted = false;
         this.gameRestarted = false;
         this.playerRevived = false;
-        this.promoCodeUsed = false; // Reset promo code usage on new game
+        // Don't reset promo code usage on new game to remember it across refreshes
+        // this.promoCodeUsed = false; 
     }
 
     /**
@@ -700,6 +755,12 @@ class UI {
     shouldStartNewGame() {
         if (this.gameStarted) {
             this.gameStarted = false;
+            
+            // When starting a new game, ensure mobile controls are visible
+            if (document.body.classList.contains('mobile-device')) {
+                this._ensureMobileControls();
+            }
+            
             return true;
         }
         return false;
@@ -712,6 +773,12 @@ class UI {
     shouldRestartGame() {
         if (this.gameRestarted) {
             this.gameRestarted = false;
+            
+            // When restarting a game, ensure mobile controls are visible
+            if (document.body.classList.contains('mobile-device')) {
+                this._ensureMobileControls();
+            }
+            
             return true;
         }
         return false;
@@ -1107,6 +1174,10 @@ class UI {
                 document.documentElement.style.getPropertyValue('--safe-area-inset-top')) {
                 document.body.classList.add('ios-device');
             }
+            
+            // Always ensure mobile controls are visible when in the game
+            // This ensures that controls are available even after a refresh with promoCodeUsed=true
+            this._ensureMobileControls();
         }
     }
     
@@ -1404,6 +1475,7 @@ class UI {
                 promoCodeSection.appendChild(inputRow);
             }
             
+            // SINGLE PLACE to create the buttons row - DELETE THE DUPLICATE BELOW
             // Create the buttons row for leaderboard and restart buttons
             // Get references to the buttons
             const leaderboardButton = document.getElementById('view-leaderboard-button');
@@ -1411,7 +1483,7 @@ class UI {
             
             // Check if buttons exist
             if (leaderboardButton && restartButton) {
-                // Remove any existing mobile-buttons-row
+                // Remove any existing mobile-buttons-row to avoid duplicates
                 const existingContainer = gameOverScreen.querySelector('.mobile-buttons-row');
                 if (existingContainer) {
                     existingContainer.remove();
@@ -1420,6 +1492,7 @@ class UI {
                 // Create a new container
                 const buttonsRow = document.createElement('div');
                 buttonsRow.className = 'mobile-buttons-row';
+                buttonsRow.style.display = 'flex'; // Ensure it's visible
                 
                 // Clone the buttons
                 const leaderboardClone = leaderboardButton.cloneNode(true);
@@ -1429,14 +1502,18 @@ class UI {
                 leaderboardClone.classList.add('mobile-row-button');
                 restartClone.classList.add('mobile-row-button');
                 
+                // Ensure buttons are visible
+                leaderboardClone.style.display = 'block';
+                restartClone.style.display = 'block';
+                
                 // Add buttons to the row
                 buttonsRow.appendChild(leaderboardClone);
                 buttonsRow.appendChild(restartClone);
                 
-                // Add the row to the game over screen
+                // Add the row to the game over screen - append at the end to ensure it's visible
                 gameOverScreen.appendChild(buttonsRow);
                 
-                // Hide the original buttons
+                // Hide the original buttons (this makes the duplicates go away)
                 leaderboardButton.style.display = 'none';
                 restartButton.style.display = 'none';
                 
@@ -1456,6 +1533,37 @@ class UI {
         if (promoCodeSection) {
             if (this.promoCodeUsed) {
                 promoCodeSection.classList.add('hidden');
+                
+                // For non-mobile, ensure the buttons are visible
+                if (!isMobile) {
+                    const leaderboardButton = document.getElementById('view-leaderboard-button');
+                    const restartButton = document.getElementById('restart-button');
+                    
+                    if (leaderboardButton) {
+                        leaderboardButton.style.display = 'inline-block';
+                    }
+                    
+                    if (restartButton) {
+                        restartButton.style.display = 'inline-block';
+                    }
+                }
+                
+                // Also ensure the donation section remains visible
+                const donationSection = document.querySelector('.donation-section');
+                if (donationSection) {
+                    donationSection.classList.remove('hidden');
+                }
+                
+                // If there's a monobank link, make sure it's visible
+                const monobankLink = document.getElementById('monobank-link');
+                if (monobankLink) {
+                    monobankLink.classList.remove('hidden');
+                    
+                    // If we're on mobile, add back the mobile-donation-button class
+                    if (isMobile) {
+                        monobankLink.classList.add('mobile-donation-button');
+                    }
+                }
             } else {
                 promoCodeSection.classList.remove('hidden');
             }
@@ -1494,6 +1602,42 @@ class UI {
         if (isMobile && window.innerHeight > window.innerWidth) {
             // Show message to rotate for better gameplay
             this.showMessage(GameTexts.messages.rotateDevice || "Поверніть пристрій для кращої гри", 5000);
+        }
+    }
+
+    /**
+     * Ensure mobile controls are always visible
+     * This is called during initialization and should make sure controls appear
+     * regardless of promo code state
+     * @private
+     */
+    _ensureMobileControls() {
+        // Make sure mobile controls are visible
+        const mobileControls = document.getElementById('mobile-controls');
+        if (mobileControls) {
+            // Explicitly remove the 'hidden' class, which can override display styles
+            mobileControls.classList.remove('hidden');
+            mobileControls.style.display = 'flex';
+            
+            // Ensure all buttons inside are visible
+            const buttons = mobileControls.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.style.display = 'block';
+            });
+            
+            // If we have directional controls container, ensure it's visible
+            const directionalControls = document.getElementById('directional-controls');
+            if (directionalControls) {
+                directionalControls.classList.remove('hidden'); // Remove hidden class
+                directionalControls.style.display = 'grid';
+            }
+            
+            // Also check for REB button specifically
+            const rebButton = document.getElementById('reb-button');
+            if (rebButton) {
+                rebButton.classList.remove('hidden'); // Remove hidden class
+                rebButton.style.display = 'block';
+            }
         }
     }
 } 

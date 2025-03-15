@@ -787,6 +787,34 @@ button:hover {
         background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(20,20,20,0.9) 100%);
     }
     
+    /* Show backgrounds specifically on menu screen for mobile */
+    body.mobile-device #menu-screen ~ .left-background,
+    body.mobile-device #menu-screen ~ .right-background {
+        display: block !important;
+        height: 100vh;
+        opacity: 0.7;
+        z-index: -1;
+    }
+    
+    /* Adjust left background for mobile menu */
+    body.mobile-device #menu-screen ~ .left-background {
+        left: 0;
+        max-width: 200px;
+        object-position: left center;
+    }
+    
+    /* Adjust right background for mobile menu */
+    body.mobile-device #menu-screen ~ .right-background {
+        right: 0;
+        max-width: 200px;
+        object-position: right center;
+    }
+    
+    /* Still hide top background on mobile */
+    body.mobile-device #menu-screen ~ .top-background {
+        display: none;
+    }
+    
     /* Rest of mobile styles... */
 }
 
@@ -800,8 +828,10 @@ button:hover {
         overflow: hidden;
     }
     
-    /* Hide backgrounds in landscape mobile view */
-    .left-background, .right-background, .top-background {
+    /* Hide backgrounds in landscape mobile view EXCEPT on menu screen */
+    .left-background:not(#menu-screen ~ .left-background), 
+    .right-background:not(#menu-screen ~ .right-background), 
+    .top-background {
         display: none;
     }
     
@@ -1358,9 +1388,9 @@ body.mobile-device #game-over-screen .mobile-donation-button,
 body.mobile-device #game-over-screen .mobile-donation-section,
 #game-over-screen.mobile-optimized .mobile-donation-section {
     background: linear-gradient(to bottom, rgba(50, 50, 50, 0.9), rgba(30, 30, 30, 0.9));
-    padding: 12px 10px;
+    padding: 7px 10px;
     border-radius: 10px;
-    margin: 15px auto;
+    margin: 7px auto;
     max-width: 95%;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
@@ -1369,7 +1399,7 @@ body.mobile-device #game-over-screen .mobile-donation-section p,
 #game-over-screen.mobile-optimized .mobile-donation-section p {
     font-size: 14px;
     line-height: 1.4;
-    margin-bottom: 0    px;
+    margin-bottom: 0px;
     text-align: center;
     color: rgba(255, 255, 255, 0.9);
 }
@@ -1486,4 +1516,183 @@ body.mobile-device #game-over-screen .mobile-donation-section p,
 #game-over-screen.mobile-optimized .mobile-buttons-row #restart-button {
     background: linear-gradient(to bottom, rgba(76,175,80,0.8) 0%, rgba(56,142,60,0.8) 100%);
     border: 1px solid rgba(76,175,80,0.6);
+}
+
+/* Mobile optimization for donation screen */
+#donation-screen.mobile-optimized .donation-section {
+    background: linear-gradient(to bottom, rgba(50, 50, 50, 0.9), rgba(30, 30, 30, 0.9));
+    padding: 15px 10px;
+    border-radius: 10px;
+    margin: 0 auto;
+    max-width: 95%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+#donation-screen.mobile-optimized .donation-section p {
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+#donation-screen.mobile-optimized #monobank-link.mobile-donation-button {
+    display: block;
+    width: 80%;
+    margin: 5px auto;
+    padding: 16px 20px;
+    font-size: 18px;
+    background: linear-gradient(to bottom, #3498db 0%, #2980b9 100%);
+    border-radius: 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    animation: pulse-glow 2s infinite;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    font-weight: bold;
+}
+
+#donation-screen.mobile-optimized .donation-links.mobile-enhanced {
+    margin: 0px auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+#donation-screen.mobile-optimized #back-from-donation-button {
+    min-height: 44px;
+    min-width: 200px;
+    padding: 12px 20px;
+    margin: 20px auto;
+    font-size: 16px;
+    border-radius: 8px;
+    display: block;
+    width: 80%;
+    background: linear-gradient(to bottom, rgba(85, 85, 85, 0.8) 0%, rgba(50, 50, 50, 0.8) 100%);
+    border: 1px solid rgba(100, 100, 100, 0.6);
+}
+
+/* Portrait mode background handling for menu */
+@media (orientation: portrait) and (max-width: 1024px) {
+    body.mobile-device #menu-screen ~ .left-background {
+        max-width: 130px;
+        opacity: 0.5;
+    }
+    
+    body.mobile-device #menu-screen ~ .right-background {
+        max-width: 130px;
+        opacity: 0.5;
+    }
+    
+    /* Ensure the menu content is still fully visible */
+    #menu-screen {
+        z-index: 102;
+        position: relative;
+    }
+}
+
+/* Mobile menu background styling */
+@media (max-width: 1024px) {
+    /* Apply backgrounds directly to the menu screen for mobile */
+    body.mobile-device #menu-screen {
+        background-color: rgba(0, 0, 0, 0.7);
+        background-image: 
+            url('../assets/images/left-bg.png'),
+            url('../assets/images/right-bg.png');
+        background-position: 
+            left center,
+            right center;
+        background-repeat: no-repeat;
+        background-size: 
+            200px auto,
+            200px auto;
+        border-radius: 0;
+        padding: 20px;
+        margin: 0;
+        box-shadow: none;
+    }
+    
+    /* Remove the original background styles that used separate elements */
+    body.mobile-device #menu-screen ~ .left-background,
+    body.mobile-device #menu-screen ~ .right-background,
+    body.mobile-device #menu-screen ~ .top-background {
+        display: none;
+    }
+}
+
+/* Mobile menu content styling */
+body.mobile-device #menu-screen #game-title {
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9);
+    color: #ffcc00;
+    margin-bottom: 10px;
+    font-size: 38px;
+}
+
+body.mobile-device #menu-screen .menu-buttons {
+    width: 90%;
+    max-width: 400px;
+    margin: 0 auto;
+    z-index: 5;
+    position: relative;
+}
+
+body.mobile-device #menu-screen .menu-buttons button {
+    background: rgba(30, 30, 30, 0.8);
+    border: 2px solid rgba(102, 102, 102, 0.8);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    margin: 12px auto;
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-size: 18px;
+    transition: all 0.2s ease;
+}
+
+body.mobile-device #menu-screen .menu-buttons button:active {
+    transform: scale(0.98);
+    background: rgba(40, 40, 40, 0.9);
+}
+
+body.mobile-device #menu-screen .introduction {
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 15px 15px 10px;
+    border-radius: 10px;
+    margin: 5px auto;
+    max-width: 90%;
+}
+
+/* Portrait orientation specific styling */
+@media (orientation: portrait) and (max-width: 1024px) {
+    body.mobile-device #menu-screen {
+        background-size: 
+            120px auto,
+            120px auto;
+        background-position: 
+            left bottom,
+            right bottom;
+    }
+}
+
+/* Landscape orientation specific styling */
+@media (orientation: landscape) and (max-width: 1024px) {
+    body.mobile-device #menu-screen {
+        background-size: 370px auto, 370px auto;
+        background-position: -12% top, 112% top;
+        justify-content: center;
+    }
+    
+    body.mobile-device #menu-screen .menu-buttons {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        max-width: 600px;
+    }
+    
+    body.mobile-device #menu-screen .menu-buttons button {
+        width: calc(50% - 20px);
+        margin: 8px;
+    }
 } 
