@@ -71,8 +71,16 @@ class UI {
         // Add event listeners
         this._addEventListeners();
         
-        // Show menu screen initially
-        this.showScreen('menu');
+        // Check if this is a mobile device
+        const isMobile = document.body.classList.contains('mobile-device');
+        
+        // If on mobile, show fullscreen prompt before showing the menu
+        if (isMobile && !localStorage.getItem('fullscreenPromptShown')) {
+            this._showInitialFullscreenPrompt();
+        } else {
+            // Show menu screen initially
+            this.showScreen('menu');
+        }
         
         // Initialize mobile-specific UI adjustments
         this._initMobileUI();
@@ -531,62 +539,34 @@ class UI {
     }
 
     /**
-     * Show game over screen
-     * @param {ImageManager} [imageManager] - Optional image manager to display QR code
-     */
-    showGameOver(imageManager) {
-        this.finalScoreElement.textContent = this.score;
-        this.showScreen('gameOver');
-        this.audioManager.stopMusic();
-        
-        // Always use the stored imageManager first, then fall back to parameter if needed
-        this._updateQRCode(this.imageManager || imageManager);
-        
-        // Hide promo code section if already used this session
-        const promoCodeSection = document.querySelector('.promo-code-section');
-        if (promoCodeSection) {
-            if (this.promoCodeUsed) {
-                promoCodeSection.classList.add('hidden');
-            } else {
-                promoCodeSection.classList.remove('hidden');
-            }
-        }
-        
-        // Check if score qualifies for leaderboard
-        this.leaderboardManager.wouldPlaceOnLeaderboard(this.score)
-            .then(qualifies => {
-                if (qualifies) {
-                    // Instead of automatically showing submit screen, show a notification
-                    setTimeout(() => {
-                        const leaderboardButton = document.getElementById('view-leaderboard-button');
-                        if (leaderboardButton) {
-                            // Add a visual indicator that this score can be submitted
-                            leaderboardButton.classList.add('highlight-button');
-                            leaderboardButton.innerHTML = `<span class="blink-icon">★</span> ${GameTexts.leaderboard.viewLeaderboard}`;
-                            
-                            // Show a message that the score qualifies for the leaderboard
-                            this.showMessage(GameTexts.leaderboard.scoreQualifies, 5000);
-                        }
-                    }, 2000);
-                }
-            })
-            .catch(error => {
-                console.error("Error checking leaderboard placement:", error);
-            });
-        
-        // Check if the device is in portrait mode on mobile
-        if (document.body.classList.contains('mobile-device') && window.innerHeight > window.innerWidth) {
-            // Show message to rotate for better gameplay
-            this.showMessage(GameTexts.messages.rotateDevice || "Поверніть пристрій для кращої гри", 5000);
-        }
-    }
-    
-    /**
      * Update the QR code display with the actual image if available
      * @param {ImageManager} [imageManager] - Image manager to get QR code image
      * @private
      */
     _updateQRCode(imageManager) {
+        // Check if we're on mobile device - skip QR code on mobile
+        const isMobile = document.body.classList.contains('mobile-device');
+        if (isMobile) {
+            // On mobile, hide only the QR code placeholder, not the entire donation section
+            if (this.qrPlaceholder) {
+                this.qrPlaceholder.classList.add('mobile-hidden');
+                
+                // Note: We don't need to add mobile-enhanced class here anymore
+                // as we handle the donation links in showGameOver method
+                
+                // Make sure the Monobank link is visible and styled properly
+                const monobankLink = document.getElementById('monobank-link');
+                if (monobankLink) {
+                    monobankLink.classList.add('mobile-donation-button');
+                    // Set the text content if it's empty
+                    if (!monobankLink.textContent) {
+                        monobankLink.textContent = 'Підтримати';
+                    }
+                }
+            }
+            return;
+        }
+        
         // Use class's imageManager if available and none was provided
         imageManager = imageManager || this.imageManager;
         
@@ -814,6 +794,15 @@ class UI {
      * @private
      */
     _showFullscreenPrompt(callback) {
+        // If fullscreen prompt has already been shown at startup, skip straight to game
+        if (localStorage.getItem('fullscreenPromptShown')) {
+            this.showScreen('game');
+            if (typeof callback === 'function') {
+                callback();
+            }
+            return;
+        }
+        
         // Create or get the mission preparation screen
         const missionPrepScreen = document.getElementById('mission-preparation-screen');
         
@@ -880,6 +869,9 @@ class UI {
             if (countdownContainer) {
                 countdownContainer.style.display = 'block';
             }
+            
+            // Record that the prompt has been shown
+            localStorage.setItem('fullscreenPromptShown', 'true');
         };
         
         const handleGoFullscreen = () => {
@@ -898,7 +890,7 @@ class UI {
                 gameContainer.classList.add('fullscreen-active');
             }
             
-            // Start the game after a short delay to allow fullscreen transition
+            // Show menu after a short delay to allow fullscreen transition
             setTimeout(startGameAfterChoice, 500);
         };
         
@@ -906,7 +898,7 @@ class UI {
             // Show a brief message about fullscreen benefits
             this.showMessage('Ви можете перейти в повноекранний режим через меню гри', 3000);
             
-            // Start the game
+            // Show the menu screen
             startGameAfterChoice();
         };
         
@@ -1150,7 +1142,7 @@ class UI {
         if (!document.getElementById('orientation-warning')) {
             const warning = document.createElement('div');
             warning.id = 'orientation-warning';
-            warning.textContent = 'Будь ласка, переверніть пристрій для кращого ігрового досвіду.';
+            warning.textContent = 'Будь ласка, переверніть пристрій для кращого ігрового досвіту.';
             warning.style.cssText = `
                 position: fixed;
                 top: 0;
@@ -1192,6 +1184,316 @@ class UI {
         const introTextElement = document.getElementById('intro-text');
         if (introTextElement && document.body.classList.contains('mobile-device')) {
             introTextElement.innerHTML = this._getMobileIntroText();
+        }
+    }
+
+    /**
+     * Show fullscreen prompt before main menu on mobile
+     * @private
+     */
+    _showInitialFullscreenPrompt() {
+        // Create or get the uiOverlay
+        this.uiOverlay.classList.remove('hidden');
+        
+        // Create fullscreen prompt if it doesn't exist
+        let fullscreenPrompt = document.getElementById('initial-fullscreen-prompt');
+        if (!fullscreenPrompt) {
+            fullscreenPrompt = document.createElement('div');
+            fullscreenPrompt.id = 'initial-fullscreen-prompt';
+            fullscreenPrompt.className = 'fullscreen-prompt';
+            
+            // Create prompt content
+            fullscreenPrompt.innerHTML = `
+                <div class="fullscreen-icon">⛶</div>
+                <p>Для кращого досвіду, перейдіть в повноекранний режим</p>
+                <button id="initial-go-fullscreen-button" class="highlight-button">Повний екран</button>
+                <button id="initial-skip-fullscreen-button">Пропустити</button>
+            `;
+            
+            // Add to UI overlay
+            this.uiOverlay.appendChild(fullscreenPrompt);
+        } else {
+            // Show the prompt if it already exists
+            fullscreenPrompt.style.display = 'flex';
+        }
+        
+        // Get the buttons
+        const goFullscreenButton = document.getElementById('initial-go-fullscreen-button');
+        const skipFullscreenButton = document.getElementById('initial-skip-fullscreen-button');
+        
+        // Add event listeners
+        const showMenuAfterChoice = () => {
+            // Hide the prompt
+            fullscreenPrompt.style.display = 'none';
+            
+            // Show the menu screen
+            this.showScreen('menu');
+            
+            // Record that the prompt has been shown
+            localStorage.setItem('fullscreenPromptShown', 'true');
+            
+            // Remove event listeners to prevent memory leaks
+            goFullscreenButton.removeEventListener('click', handleGoFullscreen);
+            skipFullscreenButton.removeEventListener('click', handleSkipFullscreen);
+        };
+        
+        const handleGoFullscreen = () => {
+            // Request fullscreen
+            const gameContainer = document.getElementById('game-container');
+            if (gameContainer) {
+                if (gameContainer.requestFullscreen) {
+                    gameContainer.requestFullscreen();
+                } else if (gameContainer.webkitRequestFullscreen) {
+                    gameContainer.webkitRequestFullscreen();
+                } else if (gameContainer.msRequestFullscreen) {
+                    gameContainer.msRequestFullscreen();
+                }
+                
+                // Add fullscreen-active class
+                gameContainer.classList.add('fullscreen-active');
+            }
+            
+            // Show menu after a short delay to allow fullscreen transition
+            setTimeout(showMenuAfterChoice, 500);
+        };
+        
+        const handleSkipFullscreen = () => {
+            // Show a brief message about fullscreen benefits
+            this.showMessage('Ви можете перейти в повноекранний режим через меню гри', 3000);
+            
+            // Show the menu screen
+            showMenuAfterChoice();
+        };
+        
+        // Add event listeners
+        goFullscreenButton.addEventListener('click', handleGoFullscreen);
+        skipFullscreenButton.addEventListener('click', handleSkipFullscreen);
+    }
+
+    /**
+     * Show game over screen
+     * @param {ImageManager} [imageManager] - Optional image manager to display QR code
+     */
+    showGameOver(imageManager) {
+        this.finalScoreElement.textContent = this.score;
+        this.showScreen('gameOver');
+        this.audioManager.stopMusic();
+        
+        // Always use the stored imageManager first, then fall back to parameter if needed
+        this._updateQRCode(this.imageManager || imageManager);
+        
+        // Check if we're on a mobile device
+        const isMobile = document.body.classList.contains('mobile-device');
+        
+        // Optimize layout for mobile devices
+        if (isMobile) {
+            // Add mobile-optimized class to game over screen
+            const gameOverScreen = document.getElementById('game-over-screen');
+            gameOverScreen.classList.add('mobile-optimized');
+            
+            // Create a container for title and score on mobile
+            const titleElement = gameOverScreen.querySelector('h1');
+            const finalScoreDiv = gameOverScreen.querySelector('.final-score');
+            
+            // Check if we need to create the title-score container
+            if (titleElement && finalScoreDiv && !gameOverScreen.querySelector('.title-score-container')) {
+                // Create container
+                const titleScoreContainer = document.createElement('div');
+                titleScoreContainer.className = 'title-score-container';
+                
+                // Move the elements to the container
+                titleElement.parentNode.insertBefore(titleScoreContainer, titleElement);
+                titleScoreContainer.appendChild(titleElement);
+                titleScoreContainer.appendChild(finalScoreDiv);
+            }
+            
+            // Make sure donation section is properly styled
+            const donationSection = document.querySelector('.donation-section');
+            if (donationSection) {
+                donationSection.classList.add('mobile-donation-section');
+            }
+            
+            // Get and hide the donation links container if it exists
+            // since we're moving its only child (monobank-link) to a new row
+            const donationLinks = document.querySelector('.donation-links');
+            if (donationLinks) {
+                donationLinks.classList.add('hidden');
+            }
+            
+            // Handle the promo code section layout
+            const promoCodeSection = document.querySelector('.promo-code-section');
+            
+            if (promoCodeSection) {
+                // Clear any existing rows
+                const existingRows = promoCodeSection.querySelectorAll('.mobile-input-row');
+                existingRows.forEach(row => row.remove());
+                
+                // Create a new container for promo input and submit button
+                const inputRow = document.createElement('div');
+                inputRow.className = 'mobile-input-row';
+                
+                // Get the original elements
+                const promoCodeInput = document.getElementById('promo-code');
+                const submitCodeButton = document.getElementById('submit-code-button');
+                
+                // Get the original monobank link
+                const originalMonobankLink = document.getElementById('monobank-link');
+                let monobankLink = null;
+                
+                if (originalMonobankLink) {
+                    // Instead of hiding the original and creating a clone with the same ID, 
+                    // let's just move the original element
+                    monobankLink = originalMonobankLink;
+                    
+                    // Set the link text if it's not already set
+                    if (!monobankLink.textContent || monobankLink.textContent.trim() === '') {
+                        monobankLink.textContent = 'Підтримати проєкт';
+                    }
+                    
+                    monobankLink.classList.add('mobile-row-item');
+                    monobankLink.classList.add('mobile-donation-button');
+                    
+                    // Remove it from its current parent
+                    if (monobankLink.parentNode) {
+                        monobankLink.parentNode.removeChild(monobankLink);
+                    }
+                    
+                    // Add it to our new row
+                    inputRow.appendChild(monobankLink);
+                }
+                
+                // Add the input and button to the row
+                if (promoCodeInput) {
+                    const promoCodeWrapper = document.createElement('div');
+                    promoCodeWrapper.className = 'mobile-row-item';
+                    
+                    // Clone the input
+                    const promoCodeClone = promoCodeInput.cloneNode(true);
+                    promoCodeClone.classList.add('mobile-input');
+                    promoCodeWrapper.appendChild(promoCodeClone);
+                    inputRow.appendChild(promoCodeWrapper);
+                    
+                    // Hide the original input
+                    promoCodeInput.style.display = 'none';
+                    
+                    // Add event listener to sync the values
+                    promoCodeClone.addEventListener('input', () => {
+                        promoCodeInput.value = promoCodeClone.value;
+                    });
+                }
+                
+                if (submitCodeButton) {
+                    const submitButtonWrapper = document.createElement('div');
+                    submitButtonWrapper.className = 'mobile-row-item';
+                    
+                    // Clone the button
+                    const submitButtonClone = submitCodeButton.cloneNode(true);
+                    submitButtonWrapper.appendChild(submitButtonClone);
+                    inputRow.appendChild(submitButtonWrapper);
+                    
+                    // Hide the original button
+                    submitCodeButton.style.display = 'none';
+                    
+                    // Add event listener to the clone
+                    submitButtonClone.addEventListener('click', () => {
+                        submitCodeButton.click();
+                    });
+                }
+                
+                // Add the row to the promo code section
+                promoCodeSection.appendChild(inputRow);
+            }
+            
+            // Create the buttons row for leaderboard and restart buttons
+            // Get references to the buttons
+            const leaderboardButton = document.getElementById('view-leaderboard-button');
+            const restartButton = document.getElementById('restart-button');
+            
+            // Check if buttons exist
+            if (leaderboardButton && restartButton) {
+                // Remove any existing mobile-buttons-row
+                const existingContainer = gameOverScreen.querySelector('.mobile-buttons-row');
+                if (existingContainer) {
+                    existingContainer.remove();
+                }
+                
+                // Create a new container
+                const buttonsRow = document.createElement('div');
+                buttonsRow.className = 'mobile-buttons-row';
+                
+                // Clone the buttons
+                const leaderboardClone = leaderboardButton.cloneNode(true);
+                const restartClone = restartButton.cloneNode(true);
+                
+                // Add classes to the clones
+                leaderboardClone.classList.add('mobile-row-button');
+                restartClone.classList.add('mobile-row-button');
+                
+                // Add buttons to the row
+                buttonsRow.appendChild(leaderboardClone);
+                buttonsRow.appendChild(restartClone);
+                
+                // Add the row to the game over screen
+                gameOverScreen.appendChild(buttonsRow);
+                
+                // Hide the original buttons
+                leaderboardButton.style.display = 'none';
+                restartButton.style.display = 'none';
+                
+                // Copy event listeners
+                leaderboardClone.addEventListener('click', () => {
+                    leaderboardButton.click();
+                });
+                
+                restartClone.addEventListener('click', () => {
+                    restartButton.click();
+                });
+            }
+        }
+        
+        // Hide promo code section if already used this session
+        const promoCodeSection = document.querySelector('.promo-code-section');
+        if (promoCodeSection) {
+            if (this.promoCodeUsed) {
+                promoCodeSection.classList.add('hidden');
+            } else {
+                promoCodeSection.classList.remove('hidden');
+            }
+        }
+        
+        // Check if score qualifies for leaderboard
+        this.leaderboardManager.wouldPlaceOnLeaderboard(this.score)
+            .then(qualifies => {
+                if (qualifies) {
+                    // Instead of automatically showing submit screen, show a notification
+                    setTimeout(() => {
+                        const leaderboardButton = document.getElementById('view-leaderboard-button');
+                        if (leaderboardButton) {
+                            // Add a visual indicator that this score can be submitted
+                            leaderboardButton.classList.add('highlight-button');
+                            leaderboardButton.innerHTML = `<span class="blink-icon">★</span> ${GameTexts.leaderboard.viewLeaderboard}`;
+                            
+                            // Also update cloned button if it exists
+                            const leaderboardClone = document.querySelector('.mobile-buttons-row #view-leaderboard-button');
+                            if (leaderboardClone) {
+                                leaderboardClone.classList.add('highlight-button');
+                                leaderboardClone.innerHTML = `<span class="blink-icon">★</span> ${GameTexts.leaderboard.viewLeaderboard}`;
+                            }
+                            
+                            // Show a message that the score qualifies for the leaderboard
+                            this.showMessage(GameTexts.leaderboard.scoreQualifies, 5000);
+                        }
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error("Error checking leaderboard placement:", error);
+            });
+        
+        // Check if the device is in portrait mode on mobile
+        if (isMobile && window.innerHeight > window.innerWidth) {
+            // Show message to rotate for better gameplay
+            this.showMessage(GameTexts.messages.rotateDevice || "Поверніть пристрій для кращої гри", 5000);
         }
     }
 } 

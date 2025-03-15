@@ -128,19 +128,19 @@ class Game {
             } else {
                 // In portrait, prepare dimensions for when rotated to landscape
                 // This is just to have reasonable default values when rotated
-                this.width = 750;
-                this.height = 544;
-                this.tilesX = 25;
-                this.tilesY = 17;
+                this.width = 768;
+                this.height = 576;
+                this.tilesX = 24;
+                this.tilesY = 18;
             }
         } else {
-            // For desktop, use the original fixed dimensions
-            this.width = 750;
-            this.height = 544; // Adjusted to exactly 17 tiles (17 * 32 = 544)
+            // For desktop, use the updated fixed dimensions
+            this.width = 768; // Updated from 750 to 768
+            this.height = 576; // Updated from 544 to 576 (32 * 18 = 576)
             
             // Store tile counts for map generation
-            this.tilesX = Math.floor(this.width / this.tileSize); // 23 tiles
-            this.tilesY = Math.floor(this.height / this.tileSize); // 17 tiles
+            this.tilesX = 24; // Updated from 23 to 24 tiles
+            this.tilesY = 18; // Updated from 17 to 18 tiles
             
             // Ensure any mobile-specific classes are removed
             document.getElementById('game-container').classList.remove('mobile-fullscreen');
@@ -1101,13 +1101,15 @@ class Game {
      * @private
      */
     _handlePlayerDeath() {
+        // Stop any ongoing player sounds and effects
+        this.player.cleanup();
+        
         this.isGameOver = true;
         
         // Play explosion sound when player dies
         this.audioManager.playSfx('sfx_explosion');
         
         // Stop all other sound effects except the explosion sound
-        this.audioManager.stopSfx('sfx_platform_move');
         this.audioManager.stopSfx('sfx_drone_hum');
         this.audioManager.stopSfx('sfx_reb_activate');
         
@@ -1430,7 +1432,8 @@ class Game {
         
         // Only create the button for desktop or if explicitly requested
         // We don't need it on mobile since we have the fullscreen prompt after countdown
-        if (!this.isMobileDevice) {
+        // Skip creating it if the fullscreen prompt has already been shown
+        if (!this.isMobileDevice || !localStorage.getItem('fullscreenPromptShown')) {
             // Create button element
             fullscreenButton = document.createElement('button');
             fullscreenButton.id = 'fullscreen-button';

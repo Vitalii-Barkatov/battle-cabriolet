@@ -132,11 +132,14 @@ class Player {
             if (this._canMove(newX, newY, map)) {
                 this.x = newX;
                 this.y = newY;
+            } else {
+                // We hit a wall or boundary - stop moving
+                this.isMoving = false;
             }
-            
-            // Handle movement sound
-            this._handleMovementSound();
         }
+        
+        // Always handle movement sound - this ensures sound stops when we're not moving
+        this._handleMovementSound();
         
         // Update EW (Electronic Warfare) state
         this._updateEWState(deltaTime);
@@ -266,6 +269,15 @@ class Player {
         this.y = y;
         this.direction = { x: 0, y: 0 };
         this.isMoving = false;
+        
+        // Stop movement sound if it's playing - force a stop regardless of flag
+        this.audioManager.stopSfx('sfx_platform_move');
+        this.moveSoundPlaying = false;
+        
+        // Also stop any looping sounds that might be playing
+        if (this.audioManager && typeof this.audioManager.stopAllSfx === 'function') {
+            this.audioManager.stopAllSfx();
+        }
     }
     
     /**
@@ -420,6 +432,7 @@ class Player {
      */
     _handleMovementSound() {
         // Only play movement sound if actually moving (position changed)
+        // Check both the movement flag and that we're actually changing position
         const isActuallyMoving = this.isMoving && 
             (this.direction.x !== 0 || this.direction.y !== 0) && 
             this.currentSpeed > 0;
@@ -428,8 +441,10 @@ class Player {
             // Play the movement sound as a looping sound
             this.audioManager.playSfx('sfx_platform_move', true); // true = loop
             this.moveSoundPlaying = true;
+            console.log("Starting platform movement sound");
         } else if (!isActuallyMoving && this.moveSoundPlaying) {
             // Stop the movement sound when no longer moving
+            console.log("Stopping platform movement sound");
             this.audioManager.stopSfx('sfx_platform_move');
             this.moveSoundPlaying = false;
         }
@@ -442,5 +457,31 @@ class Player {
     getEWCooldownProgress() {
         if (this.ewCooldownComplete) return 100;
         return Math.floor(((this.ewCooldown - this.ewCooldownTimer) / this.ewCooldown) * 100);
+    }
+
+    /**
+     * Cleanup when player is destroyed or game is reset
+     * Stops all sounds and clears any ongoing effects
+     */
+    cleanup() {
+        // Stop movement sound if it's playing
+        if (this.moveSoundPlaying) {
+            this.audioManager.stopSfx('sfx_platform_move');
+            this.moveSoundPlaying = false;
+        }
+        
+        // Make absolutely sure the platform movement sound is stopped
+        // Even if moveSoundPlaying flag is out of sync
+        this.audioManager.stopSfx('sfx_platform_move');
+        
+        // Reset movement state
+        this.isMoving = false;
+        this.direction = { x: 0, y: 0 };
+        
+        // Also stop EW sound if it's active
+        if (this.ewActive) {
+            this.audioManager.stopSfx('sfx_reb_activate');
+            this.ewActive = false;
+        }
     }
 } 

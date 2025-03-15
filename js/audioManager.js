@@ -376,7 +376,7 @@ class AudioManager {
     }
 
     /**
-     * Stop a specific sound effect
+     * Stop a playing sound effect
      * @param {string} soundId - Identifier for the sound to stop
      */
     stopSfx(soundId) {
@@ -404,30 +404,63 @@ class AudioManager {
             
             // If this is a looping sound and we have a reference to it
             if (this.loopingSounds && this.loopingSounds[actualSoundId]) {
-                console.log(`Stopping sound: ${actualSoundId}`);
+                console.log(`Stopping looping sound: ${actualSoundId}`);
                 
                 // More aggressively stop the sound
                 try {
                     const sound = this.loopingSounds[actualSoundId];
-                    sound.loop = false; // Make sure loop is off
-                    sound.pause();
-                    sound.currentTime = 0;
-                } catch (e) {
-                    console.warn(`Error stopping looping sound: ${e}`);
+                    if (sound) {
+                        // Make sure it's not null or undefined
+                        sound.loop = false;
+                        sound.pause();
+                        sound.currentTime = 0;
+                        
+                        // Remove from looping sounds tracking
+                        delete this.loopingSounds[actualSoundId];
+                    }
+                } catch (innerError) {
+                    console.warn(`Error stopping looping sound ${actualSoundId}:`, innerError);
+                    
+                    // Even if there was an error, try to clean up the reference
+                    delete this.loopingSounds[actualSoundId];
+                }
+            } else {
+                // Try to find and stop any existing instances
+                const baseSound = this.sounds[actualSoundId];
+                if (baseSound) {
+                    // Try to stop the base sound
+                    try {
+                        baseSound.pause();
+                        baseSound.currentTime = 0;
+                    } catch (e) {
+                        console.warn(`Error stopping base sound ${actualSoundId}:`, e);
+                    }
                 }
                 
-                // Remove from tracking object
-                delete this.loopingSounds[actualSoundId];
-                return;
-            }
-            
-            // Otherwise, just try to stop the original sound
-            if (this.sounds[actualSoundId]) {
-                this.sounds[actualSoundId].pause();
-                this.sounds[actualSoundId].currentTime = 0;
+                // Special case for platform movement - it's a looping sound that might be tracked incorrectly
+                if (actualSoundId === 'sfx_platform_move' && this.loopingSounds) {
+                    // Force cleanup of any platform movement sound
+                    Object.keys(this.loopingSounds).forEach(id => {
+                        if (id === actualSoundId || id.includes('platform_move')) {
+                            try {
+                                const sound = this.loopingSounds[id];
+                                if (sound) {
+                                    sound.loop = false;
+                                    sound.pause();
+                                    sound.currentTime = 0;
+                                }
+                                delete this.loopingSounds[id];
+                                console.log(`Forced cleanup of platform movement sound: ${id}`);
+                            } catch (e) {
+                                // Just try to clean up the reference
+                                delete this.loopingSounds[id];
+                            }
+                        }
+                    });
+                }
             }
         } catch (e) {
-            console.warn(`Error stopping sound ${soundId}:`, e);
+            console.warn(`Error in stopSfx for ${soundId}:`, e);
         }
     }
 

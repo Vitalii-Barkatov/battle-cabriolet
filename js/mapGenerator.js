@@ -70,9 +70,11 @@ class MapGenerator {
         
         if (missionType === 'evacuation') {
             // For evacuation, we need to place civilians
+            // Pass startPos to ensure minimum distance
             goalPos = this._generateEvacuationObjectives(tiles);
         } else {
             // For delivery, we need a delivery point
+            // Pass startPos to ensure minimum distance
             goalPos = this._generateDeliveryObjective(tiles);
         }
         
@@ -1312,15 +1314,15 @@ class MapGenerator {
                         }
                     }
                 }
-            } else {
-                // Hollow rectangle
-                shape = "hollow";
-                for (let dy = 0; dy < height; dy++) {
-                    for (let dx = 0; dx < width; dx++) {
-                        // Only place walls on the edges
-                        if (dy === 0 || dy === height - 1 || dx === 0 || dx === width - 1) {
-                            tiles[y + dy][x + dx] = this.terrainTypes.WALL;
-                        }
+            }
+        } else {
+            // Hollow rectangle
+            shape = "hollow";
+            for (let dy = 0; dy < height; dy++) {
+                for (let dx = 0; dx < width; dx++) {
+                    // Only place walls on the edges
+                    if (dy === 0 || dy === height - 1 || dx === 0 || dx === width - 1) {
+                        tiles[y + dy][x + dx] = this.terrainTypes.WALL;
                     }
                 }
             }
@@ -1388,9 +1390,12 @@ class MapGenerator {
      * @private
      */
     _generateEvacuationObjectives(tiles) {
+        // Determine start position (always in a corner)
+        const startPos = this._generateStartPosition(tiles);
+        
         // Find a suitable spot away from start for civilians
-        // Try to find an open area (preferably dirt) away from the edge
-        const safePos = this._findSafePosition(tiles, 5);
+        // Try to find an open area (preferably dirt) away from the edge and far from start
+        const safePos = this._findSafePosition(tiles, 5, startPos, 10);
         
         // Convert tile position to pixel position
         const x = safePos.tileX * this.tileSize + (this.tileSize / 2);
@@ -1399,6 +1404,7 @@ class MapGenerator {
         // Clear the area around the position (for accessibility)
         this._clearArea(tiles, safePos.tileX, safePos.tileY, 2);
         
+        // Return both start and goal positions
         return {
             x: x,
             y: y,
@@ -1414,17 +1420,20 @@ class MapGenerator {
      * @private
      */
     _generateDeliveryObjective(tiles) {
+        // Determine start position (always in a corner)
+        const startPos = this._generateStartPosition(tiles);
+        
         // Find a suitable delivery spot
         // For delivery, road access might be preferred
         const hasRoads = this._hasRoadTiles(tiles);
         
         let goalPos;
         if (hasRoads) {
-            // Try to find a spot near a road
-            goalPos = this._findPositionNearRoad(tiles);
+            // Try to find a spot near a road that's far enough from start
+            goalPos = this._findPositionNearRoad(tiles, startPos);
         } else {
-            // Fallback to any safe position
-            goalPos = this._findSafePosition(tiles, 5);
+            // Fallback to any safe position that's far enough from start
+            goalPos = this._findSafePosition(tiles, 5, startPos, 10);
         }
         
         // Convert tile position to pixel position
@@ -1462,16 +1471,25 @@ class MapGenerator {
     /**
      * Find a position near a road
      * @param {Array} tiles - 2D array of tile types
+     * @param {Object} [startPos] - Start position to ensure minimum distance from
+     * @param {number} [minDistance] - Minimum distance from start position (in tiles)
      * @returns {Object} Position near a road {tileX, tileY}
      * @private
      */
-    _findPositionNearRoad(tiles) {
+    _findPositionNearRoad(tiles, startPos = null, minDistance = 10) {
         const roadTiles = [];
         
         // Find all road tiles
         for (let y = 0; y < tiles.length; y++) {
             for (let x = 0; x < tiles[y].length; x++) {
                 if (tiles[y][x] === this.terrainTypes.ASPHALT) {
+                    // Skip road tiles that are too close to the start position
+                    if (startPos) {
+                        const distance = calculateDistance(x, y, startPos.tileX, startPos.tileY);
+                        if (distance < minDistance) {
+                            continue; // Skip this road tile, too close to start
+                        }
+                    }
                     roadTiles.push({tileX: x, tileY: y});
                 }
             }
@@ -1479,7 +1497,7 @@ class MapGenerator {
         
         // If no road tiles found, fallback to a safe position
         if (roadTiles.length === 0) {
-            return this._findSafePosition(tiles, 5);
+            return this._findSafePosition(tiles, 5, startPos, minDistance);
         }
         
         // Select a random road tile
@@ -1505,23 +1523,32 @@ class MapGenerator {
                 if (tiles[adjY][adjX] !== this.terrainTypes.ASPHALT && 
                     tiles[adjY][adjX] !== this.terrainTypes.WATER &&
                     tiles[adjY][adjX] !== this.terrainTypes.WALL) {
+                    // Double-check minimum distance from start
+                    if (startPos) {
+                        const distance = calculateDistance(adjX, adjY, startPos.tileX, startPos.tileY);
+                        if (distance < minDistance) {
+                            continue; // Skip this adjacent tile, too close to start
+                        }
+                    }
                     return {tileX: adjX, tileY: adjY};
                 }
             }
         }
         
         // If no suitable adjacent tile found, fallback to a safe position
-        return this._findSafePosition(tiles, 5);
+        return this._findSafePosition(tiles, 5, startPos, minDistance);
     }
     
     /**
      * Find a safe position for objectives
      * @param {Array} tiles - 2D array of tile types
      * @param {number} borderPadding - Padding from borders
+     * @param {Object} [startPos] - Start position to ensure minimum distance from
+     * @param {number} [minDistance] - Minimum distance from start position (in tiles)
      * @returns {Object} Safe position {tileX, tileY}
      * @private
      */
-    _findSafePosition(tiles, borderPadding = 2) {
+    _findSafePosition(tiles, borderPadding = 2, startPos = null, minDistance = 10) {
         // Define a safety score function for positions
         const getSafetyScore = (x, y) => {
             // Avoid edges
@@ -1535,6 +1562,14 @@ class MapGenerator {
             if (tiles[y][x] === this.terrainTypes.WATER || 
                 tiles[y][x] === this.terrainTypes.WALL) {
                 return -1; // Unsafe
+            }
+            
+            // If we have a start position, ensure minimum distance
+            if (startPos) {
+                const distance = calculateDistance(x, y, startPos.tileX, startPos.tileY);
+                if (distance < minDistance) {
+                    return -1; // Too close to start position
+                }
             }
             
             // Count number of dirt tiles around this position (3x3 area)
@@ -1574,12 +1609,25 @@ class MapGenerator {
         const topN = Math.min(5, candidates.length);
         const randomIndex = Math.floor(Math.random() * topN);
         
-        // If no candidates found, use center of map
+        // If no candidates found, use a position at min distance from start
         if (candidates.length === 0) {
-            return {
-                tileX: Math.floor(tiles[0].length / 2), 
-                tileY: Math.floor(tiles.length / 2)
-            };
+            if (startPos) {
+                // Pick a point that's at minDistance away from start in a random direction
+                const angle = Math.random() * 2 * Math.PI;
+                const tileX = Math.floor(startPos.tileX + Math.cos(angle) * minDistance);
+                const tileY = Math.floor(startPos.tileY + Math.sin(angle) * minDistance);
+                
+                // Clamp to map boundaries
+                const boundedX = Math.max(borderPadding, Math.min(tiles[0].length - borderPadding - 1, tileX));
+                const boundedY = Math.max(borderPadding, Math.min(tiles.length - borderPadding - 1, tileY));
+                
+                return { tileX: boundedX, tileY: boundedY };
+            } else {
+                return {
+                    tileX: Math.floor(tiles[0].length / 2), 
+                    tileY: Math.floor(tiles.length / 2)
+                };
+            }
         }
         
         return candidates[randomIndex];
