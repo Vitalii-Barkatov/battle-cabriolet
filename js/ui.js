@@ -492,6 +492,28 @@ class UI {
         this.resetScore();
         this.showScreen('game');
         
+        // Reset promo code input
+        this.promoCodeInput.value = '';
+        this.promoCodeUsed = false;
+        
+        // Make sure promo code section will be visible next time
+        const promoCodeSection = document.querySelector('.promo-code-section');
+        if (promoCodeSection) {
+            promoCodeSection.classList.remove('hidden');
+        }
+        
+        // Also make sure the original promo code input and button are visible
+        const promoCodeInput = document.getElementById('promo-code');
+        const submitCodeButton = document.getElementById('submit-code-button');
+        
+        if (promoCodeInput) {
+            promoCodeInput.style.display = '';
+        }
+        
+        if (submitCodeButton) {
+            submitCodeButton.style.display = '';
+        }
+        
         // Set this property so Game class can check if we should restart
         this.gameRestarted = true;
         this.shouldRestart = true;
@@ -764,8 +786,8 @@ class UI {
         this.gameStarted = false;
         this.gameRestarted = false;
         this.playerRevived = false;
-        // Don't reset promo code usage on new game to remember it across refreshes
-        // this.promoCodeUsed = false; 
+        // Reset promo code usage when starting a new game
+        this.promoCodeUsed = false;
     }
 
     /**
