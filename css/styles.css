@@ -96,9 +96,7 @@ body {
 }
 
 #game-container.mobile-fullscreen canvas {
-    margin-top: 30px; /* Account for HUD */
     width: 100%;
-    height: calc(100% - 30px); /* Subtract HUD height */
     object-fit: contain;
 }
 
@@ -684,6 +682,57 @@ button:hover {
     transition: transform 0.1s ease-out;
 }
 
+/* Mobile touch controls positioning */
+#mobile-controls {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 40px);
+    z-index: 10;
+    pointer-events: none;
+    display: none; /* Hidden by default, will be shown on mobile */
+}
+
+#game-container.mobile-fullscreen #mobile-controls {
+    top: 30px;
+    height: calc(100% - 30px);
+}
+
+#reb-button {
+    position: absolute;
+    bottom: 20%;
+    right: 5%;
+    width: 80px;
+    height: 80px;
+    background-color: rgba(52, 152, 219, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    color: white;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    opacity: 0.7;
+    transition: transform 0.1s, background-color 0.1s, opacity 0.1s;
+}
+
+#reb-button.active {
+    background-color: rgba(52, 152, 219, 1);
+    transform: scale(0.95);
+    opacity: 0.9;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+#reb-button.cooldown {
+    background-color: rgba(100, 100, 100, 0.8);
+    border-color: rgba(200, 200, 200, 0.6);
+}
 /* Media queries for different orientations */
 @media (orientation: portrait) {
     #mobile-controls {
@@ -693,8 +742,8 @@ button:hover {
     }
     
     #joystick-container {
-        bottom: 25%;
-        left: 50%;
+        bottom: 5%;
+        left: 25%;
         transform: translateX(-50%);
         width: 180px;
         height: 180px;
@@ -702,8 +751,8 @@ button:hover {
     
     #reb-button {
         position: absolute;
-        bottom: 5%;
-        left: 50%;
+        bottom: 8%;
+        right: -10%;
         transform: translateX(-50%);
         margin-top: 20px;
         width: 90px;
@@ -993,57 +1042,6 @@ button:hover {
     }
 }
 
-/* Mobile touch controls positioning */
-#mobile-controls {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    width: 100%;
-    height: calc(100% - 40px);
-    z-index: 10;
-    pointer-events: none;
-    display: none; /* Hidden by default, will be shown on mobile */
-}
-
-#game-container.mobile-fullscreen #mobile-controls {
-    top: 30px;
-    height: calc(100% - 30px);
-}
-
-#reb-button {
-    position: absolute;
-    bottom: 20%;
-    right: 5%;
-    width: 80px;
-    height: 80px;
-    background-color: rgba(52, 152, 219, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 18px;
-    color: white;
-    user-select: none;
-    -webkit-user-select: none;
-    pointer-events: auto;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    opacity: 0.7;
-    transition: transform 0.1s, background-color 0.1s, opacity 0.1s;
-}
-
-#reb-button.active {
-    background-color: rgba(52, 152, 219, 1);
-    transform: scale(0.95);
-    opacity: 0.9;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-}
-
-#reb-button.cooldown {
-    background-color: rgba(100, 100, 100, 0.8);
-    border-color: rgba(200, 200, 200, 0.6);
-}
 
 /* Update media queries to allow both orientations */
 @media (orientation: portrait) {
@@ -1092,12 +1090,11 @@ button:hover {
     }
     
     /* Ensure HUD stays at top */
-    #hud {
-        width: 100% !important;
-        height: 30px;
-        padding: 5px 10px;
-        font-size: 14px;
+
+    #game-container.mobile-fullscreen #hud #mission-objective{
+        display: none;
     }
+    
 }
 
 /* Ensure the mobile controls adapt to both orientations */

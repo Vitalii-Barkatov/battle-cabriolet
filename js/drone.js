@@ -276,7 +276,7 @@ class DroneManager {
         this.pendingDrone = null;
         
         // Static values that don't change
-        this.initialSpawnRange = { min: 7000, max: 10000 }; // 7-10 seconds for first drone
+        this.initialSpawnRange = { min: 27000, max: 310000 }; // 7-10 seconds for first drone !!!!!!!!!!!!!!!!!!!!!!!!!!!
         this.baseSpawnInterval = 15000; // Base interval for calculating subsequent spawns
         this.spawnReduction = 0.95; // Reduce spawn time by 5% each spawn
         
