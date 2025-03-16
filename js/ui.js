@@ -42,6 +42,19 @@ class UI {
         this.qrPlaceholder = document.querySelector('.qr-placeholder');
         this.donationQrPlaceholder = document.querySelector('.donation-qr');
         
+        // Add fullscreen button container
+        this.fullscreenButtonContainer = document.createElement('div');
+        this.fullscreenButtonContainer.id = 'fullscreen-button-container';
+        this.fullscreenButtonContainer.style.display = 'none';
+        document.body.appendChild(this.fullscreenButtonContainer);
+        
+        // Check fullscreen status on visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                this._checkFullscreenStatus();
+            }
+        });
+        
         // Initialize UI elements and event listeners
         this._initializeUI();
         
@@ -78,8 +91,8 @@ class UI {
         if (isMobile && !localStorage.getItem('fullscreenPromptShown')) {
             this._showInitialFullscreenPrompt();
         } else {
-            // Show menu screen initially
-            this.showScreen('menu');
+        // Show menu screen initially
+        this.showScreen('menu');
         }
         
         // Initialize mobile-specific UI adjustments
@@ -445,6 +458,13 @@ class UI {
             case 'game':
                 this.hud.classList.remove('hidden');
                 break;
+        }
+        
+        // Check fullscreen status when showing menu screen
+        if (screenName === 'menu') {
+            this._checkFullscreenStatus();
+        } else {
+            this._hideFullscreenButton();
         }
     }
 
@@ -845,10 +865,10 @@ class UI {
                     this._showFullscreenPrompt(callback);
                 } else {
                     // On desktop, proceed as normal
-                    this.showScreen('game');
-                    
-                    if (typeof callback === 'function') {
-                        callback();
+                this.showScreen('game');
+                
+                if (typeof callback === 'function') {
+                    callback();
                     }
                 }
             }
@@ -1578,5 +1598,111 @@ class UI {
                 rebButton.style.display = 'block';
             }
         }
+    }
+
+    /**
+     * Check if device is mobile and not in fullscreen, show button if needed
+     * @private
+     */
+    _checkFullscreenStatus() {
+        // Only show for mobile devices
+        if (!this._isMobileDevice()) return;
+
+        const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement;
+
+        if (!isFullscreen && this._getCurrentVisibleScreen() === 'menu') {
+            this._showFullscreenButton();
+        } else {
+            this._hideFullscreenButton();
+        }
+    }
+
+    /**
+     * Show an attractive fullscreen button
+     * @private
+     */
+    _showFullscreenButton() {
+        // Remove the old container if it exists
+        if (this.fullscreenButtonContainer) {
+            if (this.fullscreenButtonContainer.parentNode) {
+                this.fullscreenButtonContainer.parentNode.removeChild(this.fullscreenButtonContainer);
+            }
+            this.fullscreenButtonContainer = null;
+        }
+        
+        // Create a new container
+        const container = document.createElement('div');
+        container.id = 'fullscreen-button-container';
+        
+        // Create the button
+        const button = document.createElement('button');
+        button.id = 'attractive-fullscreen-btn';
+        button.className = 'fullscreen-button';
+        
+        // Create the SVG icon
+        const svgHTML = `
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+            <span>Tap for Best Experience!</span>
+        `;
+        
+        button.innerHTML = svgHTML;
+        
+        // Add click handler
+        button.addEventListener('click', () => {
+            this._goFullscreen();
+            this._hideFullscreenButton();
+        });
+        
+        // Add button to container
+        container.appendChild(button);
+        
+        // Add container to document
+        document.body.appendChild(container);
+        
+        // Store reference to the container
+        this.fullscreenButtonContainer = container;
+    }
+
+    /**
+     * Hide the fullscreen button
+     * @private
+     */
+    _hideFullscreenButton() {
+        if (this.fullscreenButtonContainer) {
+            if (this.fullscreenButtonContainer.parentNode) {
+                this.fullscreenButtonContainer.parentNode.removeChild(this.fullscreenButtonContainer);
+            }
+            this.fullscreenButtonContainer = null;
+        }
+    }
+
+    /**
+     * Request fullscreen mode
+     * @private
+     */
+    _goFullscreen() {
+        const element = document.documentElement;
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
+        }
+    }
+
+    /**
+     * Check if the device is mobile
+     * @private
+     * @returns {boolean}
+     */
+    _isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 } 
