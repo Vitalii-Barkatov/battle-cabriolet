@@ -228,7 +228,7 @@ class MissionManager {
                 // Play mission complete sound
                 this.audioManager.playSfx('sfx_mission_complete');
                 
-                reward = { points: 10, message: 'Mission Complete! +10 points' };
+                reward = { points: 10, message: 'Місіся виконана! +10 очок' };
             }
             
             return reward;
@@ -282,9 +282,9 @@ class MissionManager {
      */
     getReturnMessage() {
         if (this.missionType === this.missionTypes.EVACUATION) {
-            return 'Soldier rescued! Return to base.';
+            return 'Бійці евакуйовані! Повертайся на базу.';
         } else {
-            return 'Cargo delivered! Return to base.';
+            return 'Вантаж доставлено! Повертайся на базу.';
         }
     }
 
