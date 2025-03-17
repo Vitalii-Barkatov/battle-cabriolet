@@ -87,13 +87,8 @@ class UI {
         // Check if this is a mobile device
         const isMobile = document.body.classList.contains('mobile-device');
         
-        // If on mobile, show fullscreen prompt before showing the menu
-        if (isMobile && !localStorage.getItem('fullscreenPromptShown')) {
-            this._showInitialFullscreenPrompt();
-        } else {
-        // Show menu screen initially
+
         this.showScreen('menu');
-        }
         
         // Initialize mobile-specific UI adjustments
         this._initMobileUI();
@@ -881,140 +876,15 @@ class UI {
             
             if (countdown <= 0) {
                 clearInterval(countdownInterval);
-                
-                if (isMobile) {
-                    // On mobile, show fullscreen prompt instead of starting game immediately
-                    this._showFullscreenPrompt(callback);
-                } else {
-                    // On desktop, proceed as normal
                 this.showScreen('game');
                 
                 if (typeof callback === 'function') {
                     callback();
                     }
-                }
             }
         }, 1000);
     }
     
-    /**
-     * Show fullscreen prompt for mobile users
-     * @param {function} callback - Function to call after user goes fullscreen
-     * @private
-     */
-    _showFullscreenPrompt(callback) {
-        // If fullscreen prompt has already been shown at startup, skip straight to game
-        if (localStorage.getItem('fullscreenPromptShown')) {
-            this.showScreen('game');
-            if (typeof callback === 'function') {
-                callback();
-            }
-            return;
-        }
-        
-        // Create or get the mission preparation screen
-        const missionPrepScreen = document.getElementById('mission-preparation-screen');
-        
-        // Hide the mission info and countdown
-        const missionInfo = document.querySelector('.mission-info');
-        const countdownContainer = document.querySelector('.countdown-container');
-        
-        if (missionInfo) {
-            missionInfo.style.display = 'none';
-        }
-        
-        if (countdownContainer) {
-            countdownContainer.style.display = 'none';
-        }
-        
-        // Create fullscreen prompt if it doesn't exist
-        let fullscreenPrompt = document.getElementById('fullscreen-prompt');
-        if (!fullscreenPrompt) {
-            fullscreenPrompt = document.createElement('div');
-            fullscreenPrompt.id = 'fullscreen-prompt';
-            fullscreenPrompt.className = 'fullscreen-prompt';
-            
-            // Create prompt content
-            fullscreenPrompt.innerHTML = `
-                <div class="fullscreen-icon">⛶</div>
-                <p>Для кращого досвіту, перейдіть в повноекранний режим</p>
-                <button id="go-fullscreen-button" class="highlight-button">Повний екран</button>
-                <button id="skip-fullscreen-button">Пропустити</button>
-            `;
-            
-            // Add to mission preparation screen
-            missionPrepScreen.appendChild(fullscreenPrompt);
-        } else {
-            // Show the prompt if it already exists
-            fullscreenPrompt.style.display = 'flex';
-        }
-        
-        // Get the buttons
-        const goFullscreenButton = document.getElementById('go-fullscreen-button');
-        const skipFullscreenButton = document.getElementById('skip-fullscreen-button');
-        
-        // Add event listeners
-        const startGameAfterChoice = () => {
-            // Hide the prompt
-            fullscreenPrompt.style.display = 'none';
-            
-            // Show the game screen
-            this.showScreen('game');
-            
-            // Call the callback
-            if (typeof callback === 'function') {
-                callback();
-            }
-            
-            // Remove event listeners to prevent memory leaks
-            goFullscreenButton.removeEventListener('click', handleGoFullscreen);
-            skipFullscreenButton.removeEventListener('click', handleSkipFullscreen);
-            
-            // Reset mission info and countdown display for next time
-            if (missionInfo) {
-                missionInfo.style.display = 'block';
-            }
-            
-            if (countdownContainer) {
-                countdownContainer.style.display = 'block';
-            }
-            
-            // Record that the prompt has been shown
-            localStorage.setItem('fullscreenPromptShown', 'true');
-        };
-        
-        const handleGoFullscreen = () => {
-            // Request fullscreen
-            const gameContainer = document.getElementById('game-container');
-            if (gameContainer) {
-                if (gameContainer.requestFullscreen) {
-                    gameContainer.requestFullscreen();
-                } else if (gameContainer.webkitRequestFullscreen) {
-                    gameContainer.webkitRequestFullscreen();
-                } else if (gameContainer.msRequestFullscreen) {
-                    gameContainer.msRequestFullscreen();
-                }
-                
-                // Add fullscreen-active class
-                gameContainer.classList.add('fullscreen-active');
-            }
-            
-            // Show menu after a short delay to allow fullscreen transition
-            setTimeout(startGameAfterChoice, 500);
-        };
-        
-        const handleSkipFullscreen = () => {
-            // Show a brief message about fullscreen benefits
-            this.showMessage('Ви можете перейти в повноекранний режим через меню гри', 3000);
-            
-            // Show the menu screen
-            startGameAfterChoice();
-        };
-        
-        // Add event listeners
-        goFullscreenButton.addEventListener('click', handleGoFullscreen);
-        skipFullscreenButton.addEventListener('click', handleSkipFullscreen);
-    }
 
     /**
      * Load and display the leaderboard
@@ -1245,88 +1115,6 @@ class UI {
         }
     }
 
-    /**
-     * Show fullscreen prompt before main menu on mobile
-     * @private
-     */
-    _showInitialFullscreenPrompt() {
-        // Create or get the uiOverlay
-        this.uiOverlay.classList.remove('hidden');
-        
-        // Create fullscreen prompt if it doesn't exist
-        let fullscreenPrompt = document.getElementById('initial-fullscreen-prompt');
-        if (!fullscreenPrompt) {
-            fullscreenPrompt = document.createElement('div');
-            fullscreenPrompt.id = 'initial-fullscreen-prompt';
-            fullscreenPrompt.className = 'fullscreen-prompt';
-            
-            // Create prompt content
-            fullscreenPrompt.innerHTML = `
-                <div class="fullscreen-icon">⛶</div>
-                <p>Для кращого досвіту, перейдіть в повноекранний режим</p>
-                <button id="initial-go-fullscreen-button" class="highlight-button">Повний екран</button>
-                <button id="initial-skip-fullscreen-button">Пропустити</button>
-            `;
-            
-            // Add to UI overlay
-            this.uiOverlay.appendChild(fullscreenPrompt);
-        } else {
-            // Show the prompt if it already exists
-            fullscreenPrompt.style.display = 'flex';
-        }
-        
-        // Get the buttons
-        const goFullscreenButton = document.getElementById('initial-go-fullscreen-button');
-        const skipFullscreenButton = document.getElementById('initial-skip-fullscreen-button');
-        
-        // Add event listeners
-        const showMenuAfterChoice = () => {
-            // Hide the prompt
-            fullscreenPrompt.style.display = 'none';
-            
-            // Show the menu screen
-            this.showScreen('menu');
-            
-            // Record that the prompt has been shown
-            localStorage.setItem('fullscreenPromptShown', 'true');
-            
-            // Remove event listeners to prevent memory leaks
-            goFullscreenButton.removeEventListener('click', handleGoFullscreen);
-            skipFullscreenButton.removeEventListener('click', handleSkipFullscreen);
-        };
-        
-        const handleGoFullscreen = () => {
-            // Request fullscreen
-            const gameContainer = document.getElementById('game-container');
-            if (gameContainer) {
-                if (gameContainer.requestFullscreen) {
-                    gameContainer.requestFullscreen();
-                } else if (gameContainer.webkitRequestFullscreen) {
-                    gameContainer.webkitRequestFullscreen();
-                } else if (gameContainer.msRequestFullscreen) {
-                    gameContainer.msRequestFullscreen();
-                }
-                
-                // Add fullscreen-active class
-                gameContainer.classList.add('fullscreen-active');
-            }
-            
-            // Show menu after a short delay to allow fullscreen transition
-            setTimeout(showMenuAfterChoice, 500);
-        };
-        
-        const handleSkipFullscreen = () => {
-            // Show a brief message about fullscreen benefits
-            this.showMessage('Ви можете перейти в повноекранний режим через меню гри', 3000);
-            
-            // Show the menu screen
-            showMenuAfterChoice();
-        };
-        
-        // Add event listeners
-        goFullscreenButton.addEventListener('click', handleGoFullscreen);
-        skipFullscreenButton.addEventListener('click', handleSkipFullscreen);
-    }
 
     /**
      * Show game over screen

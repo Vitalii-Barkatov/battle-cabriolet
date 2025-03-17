@@ -1515,46 +1515,6 @@ class Game {
     }
 
     /**
-     * Create fullscreen button for mobile devices
-     * @private
-     */
-    _createFullscreenButton() {
-        // Check if button already exists
-        let fullscreenButton = document.getElementById('fullscreen-button');
-        
-        // Remove existing button if it exists
-        if (fullscreenButton) {
-            fullscreenButton.remove();
-        }
-        
-        // Only create the button for desktop or if explicitly requested
-        // We don't need it on mobile since we have the fullscreen prompt after countdown
-        // Skip creating it if the fullscreen prompt has already been shown
-        if (!this.isMobileDevice || !localStorage.getItem('fullscreenPromptShown')) {
-            // Create button element
-            fullscreenButton = document.createElement('button');
-            fullscreenButton.id = 'fullscreen-button';
-            fullscreenButton.innerHTML = '⛶'; // Unicode fullscreen icon
-            fullscreenButton.setAttribute('aria-label', 'Toggle fullscreen');
-            fullscreenButton.setAttribute('title', 'Toggle fullscreen');
-            
-            // Add to document
-            document.body.appendChild(fullscreenButton);
-            
-            // Add click event listener
-            fullscreenButton.addEventListener('click', () => {
-                this._toggleFullscreen();
-            });
-            
-            // Add fullscreen change event listener to update button state
-            document.addEventListener('fullscreenchange', this._onFullscreenChange.bind(this));
-            document.addEventListener('webkitfullscreenchange', this._onFullscreenChange.bind(this));
-            document.addEventListener('mozfullscreenchange', this._onFullscreenChange.bind(this));
-            document.addEventListener('MSFullscreenChange', this._onFullscreenChange.bind(this));
-        }
-    }
-    
-    /**
      * Toggle fullscreen mode
      * @private
      */
