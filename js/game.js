@@ -167,10 +167,10 @@ class Game {
             // Landscape mode setup
             
             // Show fullscreen button for mobile
-            if (this.isMobileDevice && !this.fullscreenButtonShown) {
-                this._createFullscreenButton();
-                this.fullscreenButtonShown = true;
-            }
+         //   if (this.isMobileDevice && !this.fullscreenButtonShown) {
+          //      this._createFullscreenButton();
+          //      this.fullscreenButtonShown = true;
+          //  }
             
             // Resume game if it was paused
             if (this.pausedForOrientation && this.isRunning) {
@@ -309,8 +309,8 @@ class Game {
         
         // Add fullscreen button for mobile if in landscape
         if (this.isMobileDevice && isLandscape) {
-            this._createFullscreenButton();
-            this.fullscreenButtonShown = true;
+        //    this._createFullscreenButton();
+        //    this.fullscreenButtonShown = true;
         }
         
         // Add resize handler
@@ -1043,10 +1043,10 @@ class Game {
             // Show mobile controls if on mobile
             if (this.isMobileDevice) {
                 // Make sure fullscreen button is shown
-                if (!this.fullscreenButtonShown) {
-                    this._createFullscreenButton();
-                    this.fullscreenButtonShown = true;
-                }
+              //  if (!this.fullscreenButtonShown) {
+              //      this._createFullscreenButton();
+                //      this.fullscreenButtonShown = true;
+               // }
             }
             
             // Show canvas with a smooth transition
