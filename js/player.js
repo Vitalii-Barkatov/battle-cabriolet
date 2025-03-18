@@ -60,6 +60,9 @@ class Player {
      * @param {Array} map - Current game map
      */
     update(deltaTime, keys, map) {
+        // Normalize deltaTime to seconds and cap it to prevent huge jumps
+        const dt = Math.min(deltaTime, 50) / 1000; // Convert ms to seconds, max 50ms
+        
         // Calculate direction from input
         this.direction = { x: 0, y: 0 };
         
@@ -125,8 +128,11 @@ class Player {
         
         // Apply movement if moving
         if (this.isMoving) {
-            const newX = this.x + this.direction.x * this.currentSpeed;
-            const newY = this.y + this.direction.y * this.currentSpeed;
+            // Apply frames-per-second independence by scaling movement by deltaTime
+            const speedPerFrame = this.currentSpeed * dt * 60; // Scale to 60fps equivalent
+            
+            const newX = this.x + this.direction.x * speedPerFrame;
+            const newY = this.y + this.direction.y * speedPerFrame;
             
             // Check if we can move to the new position
             if (this._canMove(newX, newY, map)) {
@@ -141,7 +147,7 @@ class Player {
         // Always handle movement sound - this ensures sound stops when we're not moving
         this._handleMovementSound();
         
-        // Update EW (Electronic Warfare) state
+        // Update EW (Electronic Warfare) state - scale cooldown by deltaTime
         this._updateEWState(deltaTime);
         
         // Check for EW activation (space bar)
@@ -198,7 +204,6 @@ class Player {
         
         // Draw EW radius when active
         if (this.ewActive) {
-            console.log("Drawing EW circle - active");
             ctx.beginPath();
             ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.ewRadius, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(52, 152, 219, 0.3)';
@@ -215,7 +220,6 @@ class Player {
      */
     activateEW() {
         if (this.ewCooldownComplete) {
-            console.log("EW activated!");
             this.ewActive = true;
             this.ewTimer = 0; // Reset timer to 0 at activation
             this.ewCooldownComplete = false;
@@ -302,7 +306,6 @@ class Player {
         this.ewCooldownTimer = 0;
         this.ewCooldownComplete = true;
         this.ewJustActivated = false;
-        console.log("EW power refreshed and ready to use");
     }
 
     /**
@@ -412,7 +415,6 @@ class Player {
         if (this.ewActive) {
             this.ewTimer += deltaTime;
             if (this.ewTimer >= this.ewDuration) {
-                console.log("EW deactivated - duration expired");
                 this.ewActive = false;
                 this.ewTimer = 0;
                 this.ewCooldownTimer = 0; // Start the cooldown timer
@@ -441,10 +443,8 @@ class Player {
             // Play the movement sound as a looping sound
             this.audioManager.playSfx('sfx_platform_move', true); // true = loop
             this.moveSoundPlaying = true;
-            console.log("Starting platform movement sound");
         } else if (!isActuallyMoving && this.moveSoundPlaying) {
             // Stop the movement sound when no longer moving
-            console.log("Stopping platform movement sound");
             this.audioManager.stopSfx('sfx_platform_move');
             this.moveSoundPlaying = false;
         }

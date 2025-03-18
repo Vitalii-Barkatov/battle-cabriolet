@@ -167,10 +167,10 @@ class Game {
             // Landscape mode setup
             
             // Show fullscreen button for mobile
-         //   if (this.isMobileDevice && !this.fullscreenButtonShown) {
-          //      this._createFullscreenButton();
-          //      this.fullscreenButtonShown = true;
-          //  }
+            if (this.isMobileDevice && !this.fullscreenButtonShown) {
+                this._createFullscreenButton();
+                this.fullscreenButtonShown = true;
+            }
             
             // Resume game if it was paused
             if (this.pausedForOrientation && this.isRunning) {
@@ -178,10 +178,11 @@ class Game {
             }
         } else {
             // Portrait mode setup - game remains visible
-            // Adjust any specific portrait mode settings here
             
-            // Game continues to run in portrait mode
-            this.pausedForOrientation = false;
+            // Pause game while in wrong orientation
+            if (this.isRunning && !this.isGameOver) {
+                this.pausedForOrientation = true;
+            }
         }
         
         // Ensure mobile controls are visible and correctly positioned
@@ -1043,10 +1044,10 @@ class Game {
             // Show mobile controls if on mobile
             if (this.isMobileDevice) {
                 // Make sure fullscreen button is shown
-              //  if (!this.fullscreenButtonShown) {
-              //      this._createFullscreenButton();
-                //      this.fullscreenButtonShown = true;
-               // }
+                if (!this.fullscreenButtonShown) {
+                    this._createFullscreenButton();
+                    this.fullscreenButtonShown = true;
+                }
             }
             
             // Show canvas with a smooth transition

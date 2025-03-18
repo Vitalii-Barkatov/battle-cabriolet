@@ -43,7 +43,6 @@ class Drone {
             
             if (this.humSound) {
                 this.isPlayingHumSound = true;
-                console.log(`Started drone hum: ${this.humSoundId}`);
             }
         }
     }
@@ -55,6 +54,9 @@ class Drone {
      * @returns {boolean} - Whether the drone should be removed
      */
     update(deltaTime, map) {
+        // Normalize deltaTime to seconds and cap it to prevent huge jumps
+        const dt = Math.min(deltaTime, 50) / 1000; // Convert ms to seconds, max 50ms
+        
         // If already destroyed, animate destruction and then remove
         if (this.isDestroyed) {
             this.destroyAnimation += deltaTime;
@@ -87,9 +89,12 @@ class Drone {
             const perpX = -dirY; // Perpendicular vector
             const perpY = dirX;
             
+            // Scale speed by deltaTime for fps independence (60fps base)
+            const speedPerFrame = this.speed * dt * 60;
+            
             // Move towards player with some oscillation
-            this.x += (dirX + perpX * oscillation) * this.speed;
-            this.y += (dirY + perpY * oscillation) * this.speed;
+            this.x += (dirX + perpX * oscillation) * speedPerFrame;
+            this.y += (dirY + perpY * oscillation) * speedPerFrame;
         }
         
         // Only check sound based on distance if it's not already playing
@@ -109,7 +114,6 @@ class Drone {
             this.audioManager.stopSfx(this.humSoundId);
             this.isPlayingHumSound = false;
             this.humSound = null;
-            console.log(`Stopped drone hum (distance): ${this.humSoundId}`);
         }
         
         return false; // Don't remove
@@ -225,9 +229,6 @@ class Drone {
         // Get a random edge position
         const position = getRandomEdgePosition(map.width, map.height, map.tileSize);
         
-        // Log the drone creation for debugging
-        console.log(`Creating drone at position: x=${position.x}, y=${position.y}, map dimensions: ${map.width}x${map.height}`);
-        
         return new Drone(
             position.x, 
             position.y, 
@@ -241,16 +242,11 @@ class Drone {
     destroy() {
         // Force stop the drone hum sound
         if (this.isPlayingHumSound) {
-            console.log(`Stopping drone hum sound on destroy: ${this.humSoundId}`);
-            
-            // Use the AudioManager to stop the sound
             this.audioManager.stopSfx(this.humSoundId);
             
             // Clear tracking variables
             this.isPlayingHumSound = false;
             this.humSound = null;
-        } else {
-            console.log(`Note: Drone was not playing hum sound when destroyed: ${this.humSoundId}`);
         }
         
         // Play explosion sound
@@ -320,8 +316,6 @@ class DroneManager {
         
         // Check if we should start playing the drone sound (2 seconds before visual appearance)
         if (this.spawnTimer <= this.warningTime && !this.warningActive) {
-            console.log("Starting drone sound 2 seconds before visual appearance");
-            
             // Create the drone but don't make it visible yet
             this.pendingDrone = Drone.createRandomDrone(this.map, this.player, this.audioManager);
             
@@ -338,14 +332,10 @@ class DroneManager {
         // Check if it's time to spawn a new drone
         if (this.spawnTimer <= 0) {
             if (this.pendingDrone) {
-                console.log("Adding pending drone to active drones");
-                // Add the pending drone to the active drones array
-                // The sound is already playing, so it will continue seamlessly
                 this.drones.push(this.pendingDrone);
                 this.pendingDrone = null;
             } else {
                 // Fallback in case there's no pending drone (shouldn't happen normally)
-                console.log("No pending drone, creating new one (fallback)");
                 this._spawnDrone();
             }
             
@@ -511,7 +501,6 @@ class DroneManager {
 function getRandomEdgePosition(mapWidth, mapHeight, tileSize) {
     // Ensure we have valid map dimensions
     if (!mapWidth || !mapHeight || mapWidth <= 0 || mapHeight <= 0) {
-        console.error("Invalid map dimensions:", mapWidth, mapHeight);
         // Fallback to some reasonable values
         mapWidth = 800;
         mapHeight = 600;
@@ -519,7 +508,6 @@ function getRandomEdgePosition(mapWidth, mapHeight, tileSize) {
     
     // Ensure we have a valid tile size
     if (!tileSize || tileSize <= 0) {
-        console.error("Invalid tile size:", tileSize);
         // Fallback to a reasonable value
         tileSize = 32;
     }
@@ -550,8 +538,6 @@ function getRandomEdgePosition(mapWidth, mapHeight, tileSize) {
             y = safetyMargin + Math.random() * (mapHeight - 2 * safetyMargin);
             break;
     }
-    
-    console.log(`Drone spawning at edge ${edge}: x=${x}, y=${y}`);
     
     return { x, y };
 } 
