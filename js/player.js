@@ -209,6 +209,37 @@ class Player {
             const rotationAngles = [0, Math.PI / 2, Math.PI, -Math.PI / 2]; // [up, right, down, left]
             ctx.rotate(rotationAngles[this.orientation]);
             
+            // If boost is active, draw a boost trail effect before drawing the platform
+            // This ensures the trail appears behind the platform in the direction of movement
+            if (this.isBoostActive) {
+                // Draw a glowing outline around the platform
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; // Gold color
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
+                
+                // Draw trail effect behind platform in the direction opposite to movement
+                const trailLength = 4; // Increased number of segments for better gradient
+                
+                // Starting point for trail - much closer to the platform
+                const trailStartY = this.height / 2 + 2; // Just 2 pixels from edge
+                
+                // Draw trail segments with higher opacity and tighter spacing
+                for (let i = 0; i < trailLength; i++) {
+                    // More visible gradient with higher starting opacity
+                    const opacity = 0.8 - (i * 0.2);
+                    // Smaller size reduction for more visible segments
+                    const size = this.width - (i * 2);
+                    
+                    ctx.fillStyle = `rgba(255, 165, 0, ${opacity})`;
+                    ctx.fillRect(
+                        -size / 2, // Center horizontally
+                        trailStartY + (i * 3), // Very tight spacing (3px instead of 5px)
+                        size,
+                        size * 0.7 // Slightly flatter rectangles for better trail appearance
+                    );
+                }
+            }
+            
             // Draw platform image centered
             ctx.drawImage(
                 platformImage, 
@@ -217,40 +248,6 @@ class Player {
                 this.width, 
                 this.height
             );
-            
-            // If boost is active, draw a boost effect
-            if (this.isBoostActive) {
-                // Draw a glowing outline around the platform
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; // Gold color
-                ctx.lineWidth = 3;
-                ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
-                
-                // Draw trail effect behind platform
-                const trailLength = 3;
-                const trailDirection = {
-                    0: { x: 0, y: 1 },    // Up: trail goes down
-                    1: { x: -1, y: 0 },   // Right: trail goes left
-                    2: { x: 0, y: -1 },   // Down: trail goes up
-                    3: { x: 1, y: 0 }     // Left: trail goes right
-                };
-                
-                const dir = trailDirection[this.orientation];
-                
-                // Draw trail segments
-                ctx.fillStyle = 'rgba(255, 165, 0, 0.7)';
-                for (let i = 1; i <= trailLength; i++) {
-                    const opacity = 0.7 - (i * 0.2);
-                    const size = this.width - (i * 3);
-                    
-                    ctx.fillStyle = `rgba(255, 165, 0, ${opacity})`;
-                    ctx.fillRect(
-                        dir.x * i * 8 - size / 2,
-                        dir.y * i * 8 - size / 2,
-                        size,
-                        size
-                    );
-                }
-            }
             
             // Restore the context
             ctx.restore();
@@ -264,6 +261,68 @@ class Player {
                 ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(this.x, this.y, this.width, this.height);
+                
+                // Draw trail in simple mode too
+                // Determine the trail direction based on orientation
+                let trailX = this.x;
+                let trailY = this.y;
+                let trailWidth = this.width;
+                let trailHeight = this.height;
+                
+                // Calculate trail position based on orientation - make it closer to platform
+                switch (this.orientation) {
+                    case 0: // Moving up - trail goes below
+                        trailY = this.y + this.height - 2; // Close to the platform
+                        trailHeight = this.height * 0.8; // Taller trail
+                        break;
+                    case 1: // Moving right - trail goes left
+                        trailX = this.x - this.width * 0.8 + 2; // Close to the platform
+                        trailWidth = this.width * 0.8; // Wider trail
+                        break;
+                    case 2: // Moving down - trail goes above
+                        trailY = this.y - this.height * 0.8 + 2; // Close to the platform
+                        trailHeight = this.height * 0.8; // Taller trail
+                        break;
+                    case 3: // Moving left - trail goes right
+                        trailX = this.x + this.width - 2; // Close to the platform
+                        trailWidth = this.width * 0.8; // Wider trail
+                        break;
+                }
+                
+                // Draw multi-layered trail for better gradient effect
+                const segments = 3;
+                
+                for (let i = 0; i < segments; i++) {
+                    let segmentX = trailX;
+                    let segmentY = trailY;
+                    let segmentWidth = trailWidth;
+                    let segmentHeight = trailHeight;
+                    
+                    // Adjust segment position and size based on orientation and segment index
+                    switch (this.orientation) {
+                        case 0: // Moving up - trail goes down
+                            segmentY = trailY + (i * 4);
+                            segmentHeight = trailHeight - (i * 5);
+                            break;
+                        case 1: // Moving right - trail goes left
+                            segmentX = trailX - (i * 4);
+                            segmentWidth = trailWidth - (i * 5);
+                            break;
+                        case 2: // Moving down - trail goes up
+                            segmentY = trailY - (i * 4);
+                            segmentHeight = trailHeight - (i * 5);
+                            break;
+                        case 3: // Moving left - trail goes right
+                            segmentX = trailX + (i * 4);
+                            segmentWidth = trailWidth - (i * 5);
+                            break;
+                    }
+                    
+                    // Draw with decreasing opacity for gradient effect
+                    const opacity = 0.8 - (i * 0.25);
+                    ctx.fillStyle = `rgba(255, 165, 0, ${opacity})`;
+                    ctx.fillRect(segmentX, segmentY, segmentWidth, segmentHeight);
+                }
             }
         }
         

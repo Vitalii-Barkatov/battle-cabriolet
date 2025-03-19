@@ -19,7 +19,8 @@ const GameTexts = {
         leaderboard: "Таблиця лідерів",
         introduction: "<div class='instructions-table'>" +
             "<div class='instruction-row'><div class='instruction-label'>Рух платформи</div><div class='instruction-value'>←↑↓→</div></div>" +
-            "<div class='instruction-row'><div class='instruction-label'>Активація РЕБ</div><div class='instruction-value'>SPACE  (працює 3с, перезарядка 10с)</div></div>" +
+            "<div class='instruction-row'><div class='instruction-label'>Активація РЕБ</div><div class='instruction-value'>Пробіл  (працює 3с, перезарядка 10с)</div></div>" +
+            "<div class='instruction-row'><div class='instruction-label'>Навалити!</div><div class='instruction-value'>С  (працює 2с, один раз за місію)</div></div>" +
             "</div>" +
             "<div class='instructions-spacing'></div>" +
             "<div class='instructions-table'>" +

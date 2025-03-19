@@ -1562,7 +1562,12 @@ class UI {
         // Get current EW cooldown
         const ewCooldownElement = document.getElementById('ew-cooldown');
         if (ewCooldownElement) {
-            ewCooldownElement.textContent = `РЕБ: ${this.rebCooldown}%`;
+            // Get the existing key hint if it exists
+            const keyHint = ewCooldownElement.querySelector('.key-hint');
+            const keyHintHTML = keyHint ? keyHint.outerHTML : '<span class="key-hint">(Пробіл)</span>';
+            
+            // Update the text and keep the key hint
+            ewCooldownElement.innerHTML = `РЕБ: ${this.rebCooldown}% ${keyHintHTML}`;
             
             // Update color based on cooldown
             if (this.rebCooldown < 100) {
@@ -1577,12 +1582,16 @@ class UI {
         // Get boost availability indicator
         const boostIndicatorElement = document.getElementById('boost-indicator');
         if (boostIndicatorElement) {
+            // Get the existing key hint if it exists
+            const keyHint = boostIndicatorElement.querySelector('.key-hint');
+            const keyHintHTML = keyHint ? keyHint.outerHTML : '<span class="key-hint">(C)</span>';
+            
             if (this.boostAvailable) {
-                boostIndicatorElement.textContent = 'НАВАЛИТИ: ✓';
+                boostIndicatorElement.innerHTML = `НАВАЛИТИ: ✓ ${keyHintHTML}`;
                 boostIndicatorElement.classList.remove('unavailable');
                 boostIndicatorElement.classList.add('available');
             } else {
-                boostIndicatorElement.textContent = 'НАВАЛИТИ: ✗';
+                boostIndicatorElement.innerHTML = `НАВАЛИТИ: ✗ ${keyHintHTML}`;
                 boostIndicatorElement.classList.remove('available');
                 boostIndicatorElement.classList.add('unavailable');
             }
