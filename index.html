@@ -139,15 +139,11 @@
                 </div>
             </div>
         </div>
-        <div id="hud" class="hidden">
-            <div id="score"></div>
-            <div id="mission-objective"></div>
-            <div id="reb-cooldown-container">
-                <div id="reb-cooldown-label"></div>
-                <div id="reb-cooldown-bar">
-                    <div id="reb-cooldown-fill"></div>
-                </div>
-            </div>
+        <div id="hud">
+            <div id="score-container">Score: <span id="score-value">0</span></div>
+            <div id="objective-text">Mission: Awaiting orders...</div>
+            <div id="ew-cooldown">РЕБ: 100%</div>
+            <div id="boost-indicator" class="available">НАВАЛИТИ: ✓</div>
         </div>
         
         <!-- Mobile Controls -->
@@ -157,7 +153,12 @@
                     <div id="joystick-inner"></div>
                 </div>
             </div>
-            <button id="reb-button" aria-label="Activate REB">РЕБ</button>
+            <div id="reb-button">
+                <span>РЕБ</span>
+            </div>
+            <div id="boost-button">
+                <span>Навалити!</span>
+            </div>
         </div>
     </div>
     <div class="footer-container">

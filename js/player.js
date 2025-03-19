@@ -18,6 +18,13 @@ class Player {
         this.orientation = 0; // 0 = up, 1 = right, 2 = down, 3 = left (clockwise rotation)
         this.lastPressedKey = null; // Track the last pressed key for movement
         
+        // Boost functionality ("Навалити!")
+        this.boostAvailable = true;
+        this.isBoostActive = false;
+        this.boostDuration = 2000; // 2 seconds
+        this.boostTimer = 0;
+        this.boostMultiplier = 1.5; // 1.5x speed
+        
         // EW (Electronic Warfare)
         this.ewActive = false;
         this.ewRadius = width * 3;
@@ -123,6 +130,21 @@ class Player {
             this.isMoving = true;
         }
         
+        // Check for boost activation (using letter 'c' or 'C' in any layout)
+        // This ensures it works in both latin and cyrillic layouts
+        if ((keys['c'] || keys['C'] || keys['с'] || keys['С']) && this.boostAvailable) {
+            this.activateBoost();
+        }
+        
+        // Update boost timer if active
+        if (this.isBoostActive) {
+            this.boostTimer += deltaTime;
+            if (this.boostTimer >= this.boostDuration) {
+                this.isBoostActive = false;
+                this.boostTimer = 0;
+            }
+        }
+        
         // Adjust speed based on terrain
         this._adjustSpeedBasedOnTerrain(map);
         
@@ -165,6 +187,17 @@ class Player {
         // Try to use platform texture image if available
         const platformImage = imageManager ? imageManager.getImage('player_platform') : null;
         
+        // Save the current global alpha
+        const originalAlpha = ctx.globalAlpha;
+        
+        // If boost is active, add a visual effect (pulsing)
+        if (this.isBoostActive) {
+            const pulseRate = 10; // Higher number = faster pulse
+            const pulseAmount = 0.3; // Pulse intensity (0-1)
+            const alpha = 1 - (Math.sin(Date.now() * 0.01 * pulseRate) * pulseAmount);
+            ctx.globalAlpha = alpha;
+        }
+        
         if (platformImage) {
             // Save the current context state
             ctx.save();
@@ -185,13 +218,57 @@ class Player {
                 this.height
             );
             
+            // If boost is active, draw a boost effect
+            if (this.isBoostActive) {
+                // Draw a glowing outline around the platform
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; // Gold color
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
+                
+                // Draw trail effect behind platform
+                const trailLength = 3;
+                const trailDirection = {
+                    0: { x: 0, y: 1 },    // Up: trail goes down
+                    1: { x: -1, y: 0 },   // Right: trail goes left
+                    2: { x: 0, y: -1 },   // Down: trail goes up
+                    3: { x: 1, y: 0 }     // Left: trail goes right
+                };
+                
+                const dir = trailDirection[this.orientation];
+                
+                // Draw trail segments
+                ctx.fillStyle = 'rgba(255, 165, 0, 0.7)';
+                for (let i = 1; i <= trailLength; i++) {
+                    const opacity = 0.7 - (i * 0.2);
+                    const size = this.width - (i * 3);
+                    
+                    ctx.fillStyle = `rgba(255, 165, 0, ${opacity})`;
+                    ctx.fillRect(
+                        dir.x * i * 8 - size / 2,
+                        dir.y * i * 8 - size / 2,
+                        size,
+                        size
+                    );
+                }
+            }
+            
             // Restore the context
             ctx.restore();
         } else {
             // Fallback to colored rectangle
             ctx.fillStyle = '#4CAF50'; // Green color for the platform
             ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // If boost is active, add a visual effect
+            if (this.isBoostActive) {
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+            }
         }
+        
+        // Restore original alpha
+        ctx.globalAlpha = originalAlpha;
         
         // Draw cargo or rescue indicator if carrying
         if (this.hasCargo) {
@@ -390,20 +467,30 @@ class Player {
         }
         
         // Set speed multiplier based on terrain type
+        let terrainMultiplier = 1.0;
+        
         switch (terrain) {
             case this.terrainTypes.ASPHALT:
-                this.currentSpeed = this.speed * 1.2; // 20% speed boost on asphalt (increased from 10%)
+                terrainMultiplier = 1.2; // 20% speed boost on asphalt (increased from 10%)
                 break;
             case this.terrainTypes.DIRT:
-                this.currentSpeed = this.speed * 0.8; // 80% speed on dirt (increased from 70%)
+                terrainMultiplier = 0.8; // 80% speed on dirt (increased from 70%)
                 break;
             case this.terrainTypes.WATER:
-                this.currentSpeed = this.speed * 0.5; // 50% speed on water (increased from 40%)
+                terrainMultiplier = 0.5; // 50% speed on water (increased from 40%)
                 break;
             default:
-                this.currentSpeed = this.speed;
+                terrainMultiplier = 1.0;
                 break;
         }
+        
+        // Apply boost multiplier if active
+        if (this.isBoostActive) {
+            terrainMultiplier *= this.boostMultiplier;
+        }
+        
+        // Set the current speed
+        this.currentSpeed = this.speed * terrainMultiplier;
     }
 
     /**
@@ -456,7 +543,7 @@ class Player {
      */
     getEWCooldownProgress() {
         if (this.ewCooldownComplete) return 100;
-        return Math.floor(((this.ewCooldown - this.ewCooldownTimer) / this.ewCooldown) * 100);
+        return Math.floor((this.ewCooldownTimer / this.ewCooldown) * 100);
     }
 
     /**
@@ -483,5 +570,49 @@ class Player {
             this.audioManager.stopSfx('sfx_reb_activate');
             this.ewActive = false;
         }
+    }
+
+    /**
+     * Activate boost functionality ("Навалити!")
+     * @returns {boolean} Whether boost was activated
+     */
+    activateBoost() {
+        if (this.boostAvailable) {
+            this.isBoostActive = true;
+            this.boostTimer = 0;
+            this.boostAvailable = false;
+            
+            // Play a boost activation sound if available
+            this.audioManager.playSfx('sfx_boost_activate');
+            
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Reset boost functionality for a new round
+     * Makes boost available again
+     */
+    resetBoost() {
+        this.boostAvailable = true;
+        this.isBoostActive = false;
+        this.boostTimer = 0;
+    }
+    
+    /**
+     * Check if boost is currently available
+     * @returns {boolean} Whether the boost is available
+     */
+    isBoostAvailable() {
+        return this.boostAvailable;
+    }
+    
+    /**
+     * Check if boost is currently active
+     * @returns {boolean} Whether the boost is active
+     */
+    isBoostActive() {
+        return this.isBoostActive;
     }
 } 

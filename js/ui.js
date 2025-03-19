@@ -146,29 +146,52 @@ class UI {
                 introTextElement.innerHTML = this._getMobileIntroText();
             } else {
                 // For desktop, show the full introduction with keyboard controls
-                introTextElement.innerHTML = GameTexts.menu.introduction.replace(/\n/g, '<br>');
+                if (GameTexts && GameTexts.menu && GameTexts.menu.introduction) {
+                    introTextElement.innerHTML = GameTexts.menu.introduction.replace(/\n/g, '<br>');
+                } else {
+                    // Fallback if GameTexts is not defined or missing properties
+                    introTextElement.innerHTML = "Use arrow keys to move. Press Space for REB ability. Avoid drones and mines.";
+                }
             }
         }
         
         // Game over screen
         const gameOverScreen = document.getElementById('game-over-screen');
-        gameOverScreen.querySelector('h1').textContent = GameTexts.gameOver.title;
-        
-        // Set final score label
-        const finalScoreDiv = gameOverScreen.querySelector('.final-score');
-        finalScoreDiv.innerHTML = GameTexts.gameOver.finalScore + '<span id="final-score">0</span>';
-        
-        // Reset final score element reference
-        this.finalScoreElement = document.getElementById('final-score');
-        
-        // Set donation text
-        const donationP = gameOverScreen.querySelector('.donation-section p');
-        donationP.innerHTML = GameTexts.gameOver.donationText.replace(/\n/g, '<br>');
-        
-        // Set promo code instructions
-        const promoInstructions = document.querySelector('.promo-code-instructions');
-        if (promoInstructions) {
-            promoInstructions.textContent = GameTexts.gameOver.promoCodeInstructions;
+        if (gameOverScreen) {
+            const gameOverTitle = gameOverScreen.querySelector('h1');
+            if (gameOverTitle && GameTexts && GameTexts.gameOver && GameTexts.gameOver.title) {
+                gameOverTitle.textContent = GameTexts.gameOver.title;
+            }
+            
+            // Set final score label
+            const finalScoreDiv = gameOverScreen.querySelector('.final-score');
+            if (finalScoreDiv) {
+                if (GameTexts && GameTexts.gameOver && GameTexts.gameOver.finalScore) {
+                    finalScoreDiv.innerHTML = GameTexts.gameOver.finalScore + '<span id="final-score">0</span>';
+                } else {
+                    finalScoreDiv.innerHTML = 'Final Score: <span id="final-score">0</span>';
+                }
+            }
+            
+            // Set donation text
+            const donationP = gameOverScreen.querySelector('.donation-section p');
+            if (donationP) {
+                if (GameTexts && GameTexts.gameOver && GameTexts.gameOver.donationText) {
+                    donationP.innerHTML = GameTexts.gameOver.donationText.replace(/\n/g, '<br>');
+                } else {
+                    donationP.innerHTML = 'Thank you for playing! Please consider supporting our project.';
+                }
+            }
+            
+            // Set promo code instructions
+            const promoInstructions = document.querySelector('.promo-code-instructions');
+            if (promoInstructions) {
+                if (GameTexts && GameTexts.gameOver && GameTexts.gameOver.promoCodeInstructions) {
+                    promoInstructions.textContent = GameTexts.gameOver.promoCodeInstructions;
+                } else {
+                    promoInstructions.textContent = 'Enter promo code:';
+                }
+            }
         }
         
         // Set donation screen text and elements
@@ -220,13 +243,28 @@ class UI {
         document.getElementById('countdown').textContent = GameTexts.missionPrep.countdownInitial;
             
         // HUD elements
-        document.getElementById('score').innerHTML = GameTexts.hud.score + 
-            '<span id="current-score">0</span>';
-            
-        document.getElementById('mission-objective').innerHTML = GameTexts.hud.missionObjective + 
-            '<span id="objective-text">' + GameTexts.mission.none + '</span>';
-            
-        document.getElementById('reb-cooldown-label').textContent = GameTexts.hud.ewLabel;
+        const scoreElement = document.getElementById('score');
+        if (scoreElement) {
+            scoreElement.innerHTML = GameTexts && GameTexts.hud && GameTexts.hud.score ? 
+                (GameTexts.hud.score + '<span id="current-score">0</span>') : 
+                'Score: <span id="current-score">0</span>';
+        }
+        
+        const missionObjectiveElement = document.getElementById('mission-objective');
+        if (missionObjectiveElement) {
+            missionObjectiveElement.innerHTML = 
+                (GameTexts && GameTexts.hud && GameTexts.hud.missionObjective ? 
+                    GameTexts.hud.missionObjective : 'Mission: ') + 
+                '<span id="objective-text">' + 
+                (GameTexts && GameTexts.mission && GameTexts.mission.none ? 
+                    GameTexts.mission.none : 'Awaiting orders...') + 
+                '</span>';
+        }
+        
+        const rebCooldownLabel = document.getElementById('reb-cooldown-label');
+        if (rebCooldownLabel && GameTexts && GameTexts.hud && GameTexts.hud.ewLabel) {
+            rebCooldownLabel.textContent = GameTexts.hud.ewLabel;
+        }
         
         // Leaderboard screen
         document.getElementById('leaderboard-title').textContent = GameTexts.leaderboard.title;
@@ -548,26 +586,7 @@ class UI {
      */
     updateScore(score) {
         this.score = score;
-        
-        // Update current score display if element exists
-        if (this.currentScoreElement) {
-            this.currentScoreElement.textContent = score;
-        } else {
-            // Try to get a fresh reference
-            this.currentScoreElement = document.getElementById('current-score');
-            if (this.currentScoreElement) {
-                this.currentScoreElement.textContent = score;
-            } else {
-                console.error('Current score element not found when trying to update score');
-            }
-        }
-        
-        // Update best score if needed
-        if (score > this.bestScore) {
-            this.bestScore = score;
-            saveToLocalStorage('bestScore', this.bestScore);
-            this.updateBestScore();
-        }
+        this.updateHUD();
     }
 
     /**
@@ -914,8 +933,11 @@ class UI {
             existingSubmitBtn.remove();
         }
         
+        // Increase the limit to display more scores (up to 100)
+        const displayLimit = 100;
+        
         // Load scores from Firebase
-        this.leaderboardManager.getTopScores()
+        this.leaderboardManager.getTopScores(displayLimit)
             .then(scores => {
                 // Hide loading message, show table
                 loadingMsg.classList.add('hidden');
@@ -959,7 +981,18 @@ class UI {
                     tableBody.appendChild(noScoresRow);
                 }
                 
-                // Check if player's score qualifies for leaderboard
+                // Add info about total number of scores if we reached the limit
+                if (scores.length === displayLimit) {
+                    const infoRow = document.createElement('tr');
+                    const infoCell = document.createElement('td');
+                    infoCell.colSpan = 3;
+                    infoCell.classList.add('leaderboard-info');
+                    infoCell.textContent = `Показано ${scores.length} найкращих результатів`;
+                    infoRow.appendChild(infoCell);
+                    tableBody.appendChild(infoRow);
+                }
+                
+                // Check if player's score qualifies for leaderboard (now any score > 0)
                 return this.leaderboardManager.wouldPlaceOnLeaderboard(this.score);
             })
             .then(qualifies => {
@@ -1514,5 +1547,69 @@ class UI {
      */
     _isMobileDevice() {
         return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    updateHUD() {
+        const hudElement = document.getElementById('hud');
+        if (!hudElement) return;
+        
+        // Get current score
+        const scoreElement = document.getElementById('score-value');
+        if (scoreElement) {
+            scoreElement.textContent = this.score;
+        }
+        
+        // Get current EW cooldown
+        const ewCooldownElement = document.getElementById('ew-cooldown');
+        if (ewCooldownElement) {
+            ewCooldownElement.textContent = `РЕБ: ${this.rebCooldown}%`;
+            
+            // Update color based on cooldown
+            if (this.rebCooldown < 100) {
+                ewCooldownElement.classList.add('cooldown');
+                ewCooldownElement.classList.remove('ready');
+            } else {
+                ewCooldownElement.classList.remove('cooldown');
+                ewCooldownElement.classList.add('ready');
+            }
+        }
+        
+        // Get boost availability indicator
+        const boostIndicatorElement = document.getElementById('boost-indicator');
+        if (boostIndicatorElement) {
+            if (this.boostAvailable) {
+                boostIndicatorElement.textContent = 'НАВАЛИТИ: ✓';
+                boostIndicatorElement.classList.remove('unavailable');
+                boostIndicatorElement.classList.add('available');
+            } else {
+                boostIndicatorElement.textContent = 'НАВАЛИТИ: ✗';
+                boostIndicatorElement.classList.remove('available');
+                boostIndicatorElement.classList.add('unavailable');
+            }
+        }
+        
+        // Update objective text if available
+        const objectiveElement = document.getElementById('objective-text');
+        if (objectiveElement && this.objectiveText) {
+            objectiveElement.textContent = this.objectiveText;
+        }
+    }
+
+    /**
+     * Update EW cooldown display
+     * @param {number} cooldownPercent - Cooldown percentage (0-100)
+     */
+    updateEWCooldown(cooldownPercent) {
+        this.rebCooldown = cooldownPercent;
+        this.updateHUD();
+    }
+    
+    /**
+     * Update boost availability display
+     * @param {boolean} available - Whether boost is available
+     */
+    updateBoostAvailability(available) {
+        this.boostAvailable = available;
+        this.updateHUD();
     }
 } 

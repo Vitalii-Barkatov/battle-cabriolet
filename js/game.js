@@ -166,12 +166,6 @@ class Game {
         if (isLandscape) {
             // Landscape mode setup
             
-            // Show fullscreen button for mobile
-            if (this.isMobileDevice && !this.fullscreenButtonShown) {
-                this._createFullscreenButton();
-                this.fullscreenButtonShown = true;
-            }
-            
             // Resume game if it was paused
             if (this.pausedForOrientation && this.isRunning) {
                 this.pausedForOrientation = false;
@@ -283,8 +277,8 @@ class Game {
                 this.player.lastPressedKey = e.key;
             }
             
-            // Prevent scrolling when using arrow keys and prevent default behavior for Space and Enter keys
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'Enter'].includes(e.key)) {
+            // Prevent scrolling when using arrow keys and prevent default behavior for Space and 'c' keys
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'c', 'C', 'с', 'С'].includes(e.key)) {
                 e.preventDefault();
             }
         });
@@ -307,12 +301,6 @@ class Game {
         // Check initial orientation
         const isLandscape = window.innerWidth > window.innerHeight;
         this._handleOrientation(isLandscape);
-        
-        // Add fullscreen button for mobile if in landscape
-        if (this.isMobileDevice && isLandscape) {
-        //    this._createFullscreenButton();
-        //    this.fullscreenButtonShown = true;
-        }
         
         // Add resize handler
         window.addEventListener('resize', () => {
@@ -457,6 +445,11 @@ class Game {
         
         // Update EW cooldown display
         this.ui.updateEWCooldown(this.player.getEWCooldownProgress());
+        
+        // Update boost availability display
+        if (typeof this.player.isBoostAvailable === 'function') {
+            this.ui.updateBoostAvailability(this.player.isBoostAvailable());
+        }
     }
 
     /**
@@ -1040,16 +1033,7 @@ class Game {
             // This callback runs after countdown completes
             this.isRunning = true;
             this._startNewMission(missionType);
-            
-            // Show mobile controls if on mobile
-            if (this.isMobileDevice) {
-                // Make sure fullscreen button is shown
-                if (!this.fullscreenButtonShown) {
-                    this._createFullscreenButton();
-                    this.fullscreenButtonShown = true;
-                }
-            }
-            
+                     
             // Show canvas with a smooth transition
             this._showCanvas();
             
@@ -1097,6 +1081,11 @@ class Game {
         
         // Reset the player's EW ability for the new mission
         this.player.resetEW();
+        
+        // Reset the player's boost ability for the new mission
+        if (typeof this.player.resetBoost === 'function') {
+            this.player.resetBoost();
+        }
         
         // Update objective text
         this.ui.updateObjectiveText(this.missionManager.getCurrentObjectiveText());
@@ -1202,8 +1191,9 @@ class Game {
         const joystickOuter = document.getElementById('joystick-outer');
         const joystickInner = document.getElementById('joystick-inner');
         const rebButton = document.getElementById('reb-button');
+        const boostButton = document.getElementById('boost-button');
         
-        if (!joystickContainer || !joystickOuter || !joystickInner || !rebButton) {
+        if (!joystickContainer || !joystickOuter || !joystickInner || !rebButton || !boostButton) {
             console.warn('Mobile control elements not found');
             return;
         }
@@ -1411,8 +1401,62 @@ class Game {
             }
         });
         
+        // Setup Boost button ("Навалити!")
+        let boostIsPressed = false;
+        
+        // Update boost button appearance based on availability
+        const updateBoostButton = () => {
+            if (this.player && typeof this.player.isBoostAvailable === 'function') {
+                if (this.player.isBoostAvailable()) {
+                    boostButton.classList.remove('disabled');
+                } else {
+                    boostButton.classList.add('disabled');
+                }
+            }
+        };
+        
+        // Call initially and set interval to update periodically
+        updateBoostButton();
+        setInterval(updateBoostButton, 500);
+        
+        boostButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!boostIsPressed && this.player && typeof this.player.isBoostAvailable === 'function' && this.player.isBoostAvailable()) {
+                boostIsPressed = true;
+                this.keys['c'] = true; // Use 'c' key for boost activation
+                boostButton.classList.add('active');
+                
+                // Auto-reset after animation completes
+                setTimeout(() => {
+                    boostIsPressed = false;
+                    this.keys['c'] = false;
+                    boostButton.classList.remove('active');
+                }, 500);
+            }
+        });
+        
+        // Add mouse events for desktop testing
+        boostButton.addEventListener('mousedown', (e) => {
+            if (!boostIsPressed && this.player && typeof this.player.isBoostAvailable === 'function' && this.player.isBoostAvailable()) {
+                boostIsPressed = true;
+                this.keys['c'] = true;
+                boostButton.classList.add('active');
+                
+                // Auto-reset after animation completes
+                setTimeout(() => {
+                    boostIsPressed = false;
+                    this.keys['c'] = false;
+                    boostButton.classList.remove('active');
+                }, 500);
+            }
+        });
+        
         // For iOS compatibility - prevent defaults
         rebButton.addEventListener('click', (e) => {
+            e.preventDefault();
+        });
+        
+        boostButton.addEventListener('click', (e) => {
             e.preventDefault();
         });
     }

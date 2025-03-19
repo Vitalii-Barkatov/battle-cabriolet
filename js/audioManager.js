@@ -26,6 +26,39 @@ class AudioManager {
             console.warn('Audio might not be fully supported in this browser');
             this.audioEnabled = false;
         }
+
+        // Base path for audio assets
+        this.audioPath = 'assets/audio/';
+        
+        // Sound effect registry
+        this.sfx = {};
+        
+        // Define sound effect options
+        this.sfxDefinitions = {
+            // Platform movement
+            'sfx_platform_move': { volume: 0.2, file: 'platform_move.mp3' },
+            
+            // REB (Electronic Warfare) ability
+            'sfx_reb_activate': { volume: 0.4, file: 'reb_activate.mp3' },
+            
+            // Drone sounds
+            'sfx_drone_hum': { volume: 0.3, file: 'drone_hum.mp3' },
+            'sfx_drone_destroyed': { volume: 0.5, file: 'drone_destroyed.mp3' },
+            
+            // Explosion
+            'sfx_explosion': { volume: 0.7, file: 'explosion.mp3' },
+            
+            // Mission sounds
+            'sfx_mission_complete': { volume: 0.5, file: 'mission_complete.mp3' },
+            'sfx_objective_reached': { volume: 0.4, file: 'objective_reached.mp3' },
+            
+            // UI sounds
+            'sfx_button_click': { volume: 0.2, file: 'button_click.mp3' },
+            'sfx_menu_select': { volume: 0.3, file: 'menu_select.mp3' },
+            
+            // Boost sound
+            'sfx_boost_activate': { volume: 0.5, file: 'boost_activate.mp3' }
+        };
     }
 
     /**

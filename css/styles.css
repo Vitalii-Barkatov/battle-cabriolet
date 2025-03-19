@@ -342,14 +342,69 @@ button:hover {
     left: 0;
     width: 100%;
     height: 40px;
-    padding: 5px 10px;
-    z-index: 50;
-    font-size: 16px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.7);
-    border-bottom: 1px solid #444;
+    padding: 0 10px;
+    box-sizing: border-box;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    z-index: 10;
+}
+
+#score-container {
+    flex: 1;
+    text-align: left;
+}
+
+#objective-text {
+    flex: 2;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#ew-cooldown {
+    flex: 1;
+    text-align: right;
+    margin-right: 10px;
+}
+
+#ew-cooldown.cooldown {
+    color: #ff9800; /* Orange for cooldown */
+}
+
+#ew-cooldown.ready {
+    color: #2196F3; /* Blue when fully charged */
+}
+
+#boost-indicator {
+    flex: 1;
+    text-align: right;
+    font-weight: bold;
+}
+
+#boost-indicator.available {
+    color: #4CAF50; /* Green when available */
+}
+
+#boost-indicator.unavailable {
+    color: #808080; /* Grey when unavailable, instead of red */
+}
+
+@media (max-width: 768px) {
+    #hud {
+        height: 30px;
+        font-size: 12px;
+        padding: 0 5px;
+    }
+    
+    #objective-text {
+        flex: 1.5;
+    }
 }
 
 #game-container.mobile-fullscreen #hud {
@@ -501,18 +556,44 @@ button:hover {
     background-color: rgba(0, 0, 0, 0.8);
 }
 
+/* Leaderboard screen */
+#leaderboard-screen {
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+}
+
+#leaderboard-screen h1 {
+    margin-bottom: 15px;
+}
+
 /* Leaderboard styles */
 .leaderboard-content {
     width: 100%;
-    max-height: 400px;
-    overflow-y: auto;
-    margin: 20px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin: 10px 0 15px;
 }
 
 #leaderboard-table {
     width: 100%;
     border-collapse: collapse;
     margin: 0 auto;
+    flex: 1;
+    overflow-y: auto;
+}
+
+#leaderboard-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #222;
+}
+
+#leaderboard-table tbody {
+    overflow-y: auto;
 }
 
 #leaderboard-table th,
@@ -526,10 +607,31 @@ button:hover {
     background-color: #333;
     color: #ffcc00;
     font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Alternate row colors for better readability */
+#leaderboard-table tbody tr:nth-child(odd) {
+    background-color: rgba(40, 40, 40, 0.5);
+}
+
+#leaderboard-table tbody tr:nth-child(even) {
+    background-color: rgba(30, 30, 30, 0.5);
 }
 
 #leaderboard-table tr:hover {
-    background-color: #2a2a2a;
+    background-color: #2a2a2a !important;
+}
+
+.leaderboard-info {
+    background-color: #1a1a1a !important;
+    color: #aaa;
+    font-style: italic;
+    font-size: 14px;
+    padding: 8px !important;
+    border-top: 1px solid #444;
 }
 
 .leaderboard-message {
@@ -537,6 +639,53 @@ button:hover {
     padding: 15px;
     text-align: center;
     font-size: 18px;
+}
+
+/* Mobile-specific leaderboard optimizations */
+@media (max-width: 768px) {
+    #leaderboard-screen {
+        max-height: 90vh;
+        padding: 10px;
+    }
+    
+    #leaderboard-screen h1 {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+    
+    .leaderboard-content {
+        margin: 5px 0 10px;
+    }
+    
+    #leaderboard-table th,
+    #leaderboard-table td {
+        padding: 8px 5px;
+        font-size: 14px;
+    }
+    
+    /* Make rank column narrower on mobile */
+    #leaderboard-table th:first-child,
+    #leaderboard-table td:first-child {
+        width: 15%;
+    }
+    
+    /* Give more space to name column */
+    #leaderboard-table th:nth-child(2),
+    #leaderboard-table td:nth-child(2) {
+        width: 60%;
+        text-align: left;
+    }
+    
+    /* Make score column width fixed */
+    #leaderboard-table th:last-child,
+    #leaderboard-table td:last-child {
+        width: 25%;
+    }
+    
+    .leaderboard-info {
+        font-size: 12px;
+        padding: 6px !important;
+    }
 }
 
 /* Submit score screen */
@@ -701,38 +850,74 @@ button:hover {
 
 #reb-button {
     position: absolute;
-    bottom: 20%;
-    right: 5%;
-    width: 80px;
-    height: 80px;
-    background-color: rgba(52, 152, 219, 0.8);
-    border: 2px solid rgba(255, 255, 255, 0.6);
+    bottom: 15%;
+    right: 10%;
+    width: 70px;
+    height: 70px;
+    background-color: rgba(52, 152, 219, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.8);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 22px;
     font-weight: bold;
-    font-size: 18px;
     color: white;
     user-select: none;
     -webkit-user-select: none;
     pointer-events: auto;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    opacity: 0.7;
-    transition: transform 0.1s, background-color 0.1s, opacity 0.1s;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+    text-align: center;
+    line-height: 1;
+    padding: 23px 0;
 }
 
-#reb-button.active {
-    background-color: rgba(52, 152, 219, 1);
+#reb-button span {
+    display: block;
+    margin-top: -1px; /* Fine-tune vertical position */
+}
+
+#boost-button {
+    position: absolute;
+    bottom: 30%;
+    right: 10%;
+    width: 85px;
+    height: 85px;
+    background-color: rgba(255, 165, 0, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: bold;
+    color: white;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: auto;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+    z-index: 20;
+    text-align: center;
+}
+
+#boost-button.disabled {
+    background-color: rgba(150, 150, 150, 0.5);
+    border-color: rgba(200, 200, 200, 0.5);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#boost-button.active {
+    background-color: rgba(255, 215, 0, 0.9);
     transform: scale(0.95);
-    opacity: 0.9;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-#reb-button.cooldown {
-    background-color: rgba(100, 100, 100, 0.8);
-    border-color: rgba(200, 200, 200, 0.6);
+.dpad-button.active, #reb-button.active {
+    background-color: rgba(80, 80, 80, 0.9);
+    transform: scale(0.95);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
+
 /* Media queries for different orientations */
 @media (orientation: portrait) {
     #mobile-controls {
@@ -778,8 +963,8 @@ button:hover {
     #reb-button {
         bottom: 10%; 
         right: 5%;
-        width: 80px;
-        height: 80px;
+        width: 70px;
+        height: 70px;
     }
 }
 

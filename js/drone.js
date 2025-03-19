@@ -226,8 +226,36 @@ class Drone {
         // Use standard tile size for drones (no enlargement)
         const droneSize = map.tileSize;
         
-        // Get a random edge position
-        const position = getRandomEdgePosition(map.width, map.height, map.tileSize);
+        // Calculate minimum distance from player (half of diagonal of the game area)
+        const minDistance = Math.sqrt(map.width * map.width + map.height * map.height) * 0.4;
+        
+        // Get player center position
+        const playerCenter = {
+            x: player.x + player.width / 2,
+            y: player.y + player.height / 2
+        };
+        
+        // Try to find a position that's far enough from the player
+        let position;
+        let distance = 0;
+        let attempts = 0;
+        const maxAttempts = 10;  // Prevent infinite loops
+        
+        while (distance < minDistance && attempts < maxAttempts) {
+            position = getRandomEdgePosition(map.width, map.height, map.tileSize);
+            
+            // Calculate distance to player
+            const dx = position.x - playerCenter.x;
+            const dy = position.y - playerCenter.y;
+            distance = Math.sqrt(dx * dx + dy * dy);
+            
+            attempts++;
+        }
+        
+        // If we couldn't find a good position after max attempts, use the last one
+        if (!position) {
+            position = getRandomEdgePosition(map.width, map.height, map.tileSize);
+        }
         
         return new Drone(
             position.x, 

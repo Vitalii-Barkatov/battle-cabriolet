@@ -5,7 +5,8 @@
 class LeaderboardManager {
   constructor() {
     this.leaderboardRef = database.ref('leaderboard');
-    this.maxEntries = 10; // Store only top 10 scores
+    this.maxEntries = Number.MAX_SAFE_INTEGER; // Unlimited entries
+    this.displayLimit = 100; // Display up to 100 entries at once, but can be changed
   }
 
   /**
@@ -24,9 +25,7 @@ class LeaderboardManager {
       timestamp: firebase.database.ServerValue.TIMESTAMP
     }).then(() => {
       console.log(`Score ${score} submitted for ${playerName}`);
-      
-      // After submitting, trim the leaderboard to keep only top scores
-      return this.trimLeaderboard();
+      return Promise.resolve();
     }).catch(error => {
       console.error("Error submitting score:", error);
       throw error;
@@ -35,10 +34,10 @@ class LeaderboardManager {
 
   /**
    * Get the top scores from the leaderboard
-   * @param {number} limit - Maximum number of scores to retrieve
+   * @param {number} limit - Maximum number of scores to retrieve (default: 100)
    * @returns {Promise<Array>} Promise that resolves to an array of score objects
    */
-  getTopScores(limit = this.maxEntries) {
+  getTopScores(limit = this.displayLimit) {
     return this.leaderboardRef
       .orderByChild('score')
       .limitToLast(limit)
@@ -61,45 +60,13 @@ class LeaderboardManager {
   }
 
   /**
-   * Trim the leaderboard to keep only the top scores
-   * @private
-   */
-  trimLeaderboard() {
-    return this.getTopScores(this.maxEntries + 10) // Get more than we need
-      .then(scores => {
-        // If we have more entries than maxEntries, remove the lowest scores
-        if (scores.length > this.maxEntries) {
-          const scoresToRemove = scores.slice(this.maxEntries);
-          
-          // Create a batch of delete operations
-          const updates = {};
-          scoresToRemove.forEach(score => {
-            updates[score.id] = null; // null value deletes the entry
-          });
-          
-          // Apply the batch delete
-          return this.leaderboardRef.update(updates);
-        }
-        return Promise.resolve();
-      });
-  }
-
-  /**
-   * Check if the given score would place on the leaderboard
+   * Check if the given score is greater than zero
+   * (All non-zero scores can now be submitted to the unlimited leaderboard)
    * @param {number} score - Score to check
-   * @returns {Promise<boolean>} Promise that resolves to true if the score places on the leaderboard
+   * @returns {Promise<boolean>} Promise that resolves to true if the score is greater than zero
    */
   wouldPlaceOnLeaderboard(score) {
-    return this.getTopScores()
-      .then(scores => {
-        // If we have fewer than maxEntries, any score places
-        if (scores.length < this.maxEntries) {
-          return true;
-        }
-        
-        // Otherwise, check if this score is higher than the lowest on the board
-        const lowestScore = scores[scores.length - 1].score;
-        return score > lowestScore;
-      });
+    // Any score greater than zero can be added to the leaderboard
+    return Promise.resolve(score > 0);
   }
 } 
